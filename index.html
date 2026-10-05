@@ -24,12 +24,11 @@
         <p class="subtitle">Independent Open-Source PC Configurator</p>
       </div>
 
-      <!-- GPU Customizer -->
+      <!-- GPU Customizer (Populated dynamically from parts.json) -->
       <div class="config-card">
         <label>Graphics Card (GPU)</label>
-        <div class="btn-group">
-          <button class="active" onclick="swapGPU('rtx4090')">RTX 4090 (3-Fan)</button>
-          <button onclick="swapGPU('rtx4070')">RTX 4070 (Compact)</button>
+        <div class="btn-group" id="gpu-btn-group">
+          <!-- Dynamic buttons from parts.json load here -->
         </div>
       </div>
 
