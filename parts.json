@@ -1,0 +1,50 @@
+{
+  "gpus": [
+    {
+      "id": "rtx4090",
+      "name": "NVIDIA GeForce RTX 4090",
+      "brand": "NVIDIA",
+      "vram": "24GB GDDR6X",
+      "length_mm": 304,
+      "power_watts": 450,
+      "slot_size": 1.0,
+      "color_hex": "0x45a29e"
+    },
+    {
+      "id": "rtx4070",
+      "name": "NVIDIA GeForce RTX 4070",
+      "brand": "NVIDIA",
+      "vram": "12GB GDDR6X",
+      "length_mm": 242,
+      "power_watts": 200,
+      "slot_size": 0.6,
+      "color_hex": "0x1f2833"
+    },
+    {
+      "id": "rx7900xtx",
+      "name": "AMD Radeon RX 7900 XTX",
+      "brand": "AMD",
+      "vram": "24GB GDDR6",
+      "length_mm": 287,
+      "power_watts": 355,
+      "slot_size": 0.9,
+      "color_hex": "0xe63946"
+    }
+  ],
+  "cpus": [
+    {
+      "id": "i9-14900k",
+      "name": "Intel Core i9-14900K",
+      "socket": "LGA1700",
+      "cores": 24,
+      "power_watts": 253
+    },
+    {
+      "id": "ryzen9-7950x",
+      "name": "AMD Ryzen 9 7950X",
+      "socket": "AM5",
+      "cores": 16,
+      "power_watts": 170
+    }
+  ]
+}
