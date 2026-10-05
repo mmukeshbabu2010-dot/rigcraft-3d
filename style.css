@@ -1,0 +1,141 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #0b0c10;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #c5c6c7;
+}
+
+#app-container {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  flex-direction: row;
+}
+
+#canvas-container {
+  flex: 1;
+  height: 100%;
+  position: relative;
+}
+
+/* UI Configurator Sidebar */
+#ui-sidebar {
+  width: 340px;
+  background: #1f2833;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: -5px 0 25px rgba(0, 0, 0, 0.6);
+  z-index: 10;
+  overflow-y: auto;
+}
+
+.sidebar-header h2 {
+  font-size: 1.5rem;
+  color: #66fcf1;
+}
+
+.subtitle {
+  font-size: 0.8rem;
+  color: #45a29e;
+  margin-top: 4px;
+}
+
+.config-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #0b0c10;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(102, 252, 241, 0.1);
+}
+
+.config-card label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #c5c6c7;
+}
+
+.btn-group {
+  display: flex;
+  gap: 8px;
+}
+
+button {
+  flex: 1;
+  padding: 10px;
+  background: #1f2833;
+  border: 1px solid #45a29e;
+  color: #66fcf1;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.8rem;
+  transition: all 0.2s ease-in-out;
+}
+
+button:hover, button:active {
+  background: #66fcf1;
+  color: #0b0c10;
+  border-color: #66fcf1;
+}
+
+/* Specs Box */
+#spec-summary {
+  margin-top: auto;
+  background: #0b0c10;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(102, 252, 241, 0.2);
+}
+
+#spec-summary h3 {
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+  color: #66fcf1;
+}
+
+#spec-summary ul {
+  list-style: none;
+  font-size: 0.82rem;
+  line-height: 1.8;
+}
+
+.badge-pass {
+  background: #2e7d32;
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+/* Responsive Mobile Layout */
+@media (max-width: 768px) {
+  #app-container {
+    flex-direction: column-reverse;
+  }
+
+  #ui-sidebar {
+    width: 100%;
+    height: 45vh;
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  #canvas-container {
+    height: 55vh;
+  }
+}
