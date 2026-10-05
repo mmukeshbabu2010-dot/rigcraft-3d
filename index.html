@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>RigCraft 3D — Interactive PC Builder</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Three.js & OrbitControls via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+  <div id="app-container">
+    
+    <!-- 3D Viewport -->
+    <div id="canvas-container"></div>
+
+    <!-- UI Configurator Sidebar -->
+    <div id="ui-sidebar">
+      <div class="sidebar-header">
+        <h2>RigCraft 3D</h2>
+        <p class="subtitle">Independent Open-Source PC Configurator</p>
+      </div>
+
+      <!-- GPU Customizer -->
+      <div class="config-card">
+        <label>Graphics Card (GPU)</label>
+        <div class="btn-group">
+          <button class="active" onclick="swapGPU('rtx4090')">RTX 4090 (3-Fan)</button>
+          <button onclick="swapGPU('rtx4070')">RTX 4070 (Compact)</button>
+        </div>
+      </div>
+
+      <!-- RAM & RGB Controls -->
+      <div class="config-card">
+        <label>RAM Lighting</label>
+        <div class="btn-group">
+          <button onclick="setRGB(true)">RGB Enabled</button>
+          <button onclick="setRGB(false)">Stealth Black</button>
+        </div>
+      </div>
+
+      <!-- Side Panel Maintenance -->
+      <div class="config-card">
+        <label>Case Management</label>
+        <button id="btn-panel" onclick="toggleSidePanel()">Remove Glass Panel</button>
+      </div>
+
+      <!-- Live Compatibility & Specs Overlay -->
+      <div id="spec-summary">
+        <h3>Live Configuration Specs</h3>
+        <ul>
+          <li><strong>Case:</strong> ATX Mid-Tower Black</li>
+          <li id="selected-gpu"><strong>GPU:</strong> NVIDIA RTX 4090</li>
+          <li id="selected-ram"><strong>RAM:</strong> 32GB DDR5 RGB</li>
+          <li id="estimated-power"><strong>Estimated Power:</strong> 650W</li>
+          <li><strong>Compatibility:</strong> <span class="badge-pass">PASS</span></li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
