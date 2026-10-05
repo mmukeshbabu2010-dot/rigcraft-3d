@@ -133,22 +133,32 @@ async function loadHardwareData() {
 
 function switchTab(category) {
   activeTab = category;
-  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
   
-  const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.innerText.toLowerCase() === category.replace('s', ''));
-  if (activeBtn) activeBtn.classList.add('active');
+  // Clear active state on all tab buttons
+  document.querySelectorAll('.tab-menu .tab-btn').forEach(btn => btn.classList.remove('active'));
+  
+  // Map category key to tab button index
+  const tabIndexMap = { cases: 0, cpus: 1, gpus: 2, psus: 3 };
+  const tabButtons = document.querySelectorAll('.tab-menu .tab-btn');
+  if (tabButtons[tabIndexMap[category]]) {
+    tabButtons[tabIndexMap[category]].classList.add('active');
+  }
 
   const container = document.getElementById('dynamic-btn-group');
   const label = document.getElementById('category-label');
   container.innerHTML = '';
 
-  label.innerText = `Select ${category.toUpperCase().slice(0, -1)}`;
+  // Singular category label formatting
+  const labelNames = { cases: 'Case', cpus: 'CPU', gpus: 'GPU', psus: 'PSU' };
+  label.innerText = `Select ${labelNames[category] || category}`;
 
   partsData[category].forEach((item) => {
     const btn = document.createElement('button');
     btn.innerText = item.name;
     
-    if (currentSelection[category.slice(0, -1)]?.id === item.id) {
+    // Highlight if selected
+    const selectedItem = currentSelection[category.slice(0, -1)];
+    if (selectedItem && selectedItem.id === item.id) {
       btn.classList.add('active');
     }
 
