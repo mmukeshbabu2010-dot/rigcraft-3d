@@ -1,28 +1,71 @@
 {
+  "cases": [
+    {
+      "id": "corsair-5000d",
+      "name": "Corsair 5000D Airflow",
+      "max_gpu_length_mm": 420,
+      "color_hex": "0x1f2833"
+    },
+    {
+      "id": "compact-itx",
+      "name": "SFF Mini-ITX Case",
+      "max_gpu_length_mm": 250,
+      "color_hex": "0x0b0c10"
+    }
+  ],
   "gpus": [
     {
       "id": "rtx4090",
-      "name": "NVIDIA GeForce RTX 4090",
+      "name": "NVIDIA RTX 4090 (3-Fan)",
       "brand": "NVIDIA",
+      "length_mm": 304,
       "power_watts": 450,
-      "size_x": 1.0,
+      "size_x": 1.1,
       "color_hex": "0x45a29e"
     },
     {
       "id": "rtx4070",
-      "name": "NVIDIA GeForce RTX 4070",
+      "name": "NVIDIA RTX 4070 (Compact)",
       "brand": "NVIDIA",
+      "length_mm": 242,
       "power_watts": 200,
-      "size_x": 0.6,
-      "color_hex": "0x1f2833"
+      "size_x": 0.7,
+      "color_hex": "0x2c3e50"
     },
     {
       "id": "rx7900xtx",
-      "name": "AMD Radeon RX 7900 XTX",
+      "name": "AMD RX 7900 XTX",
       "brand": "AMD",
+      "length_mm": 287,
       "power_watts": 355,
-      "size_x": 0.9,
+      "size_x": 0.95,
       "color_hex": "0xe63946"
+    }
+  ],
+  "cpus": [
+    {
+      "id": "i9-14900k",
+      "name": "Intel Core i9-14900K",
+      "power_watts": 253,
+      "socket": "LGA1700"
+    },
+    {
+      "id": "ryzen9-7950x",
+      "name": "AMD Ryzen 9 7950X",
+      "power_watts": 170,
+      "socket": "AM5"
+    }
+  ],
+  "psus": [
+    {
+      "id": "psu-850w",
+      "name": "Corsair RM850x (850W Gold)",
+      "wattage": 850
+    },
+    {
+      "id": "psu-650w",
+      "name": "Corsair RM650x (650W Gold)",
+      "wattage": 650
     }
   ]
 }
