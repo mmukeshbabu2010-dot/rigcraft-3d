@@ -30,12 +30,12 @@ body, html {
 
 /* UI Configurator Sidebar */
 #ui-sidebar {
-  width: 340px;
+  width: 360px;
   background: #1f2833;
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   border-left: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: -5px 0 25px rgba(0, 0, 0, 0.6);
   z-index: 10;
@@ -51,6 +51,28 @@ body, html {
   font-size: 0.8rem;
   color: #45a29e;
   margin-top: 4px;
+}
+
+/* Category Navigation Tabs */
+.tab-menu {
+  display: flex;
+  gap: 4px;
+  background: #0b0c10;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.tab-btn {
+  padding: 8px;
+  font-size: 0.75rem;
+  border: none;
+  background: transparent;
+  color: #c5c6c7;
+}
+
+.tab-btn:hover, .tab-btn.active {
+  background: #45a29e;
+  color: #0b0c10;
 }
 
 .config-card {
@@ -94,7 +116,7 @@ button:hover, button.active {
   border-color: #66fcf1;
 }
 
-/* Specs Box */
+/* Specs & Validation Box */
 #spec-summary {
   margin-top: auto;
   background: #0b0c10;
@@ -123,6 +145,14 @@ button:hover, button.active {
   font-weight: bold;
 }
 
+.badge-fail {
+  background: #d32f2f;
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
 /* Responsive Mobile Layout */
 @media (max-width: 768px) {
   #app-container {
@@ -130,16 +160,15 @@ button:hover, button.active {
   }
 
   #canvas-container {
-    height: 50vh;
+    height: 45vh;
     width: 100vw;
   }
 
   #ui-sidebar {
     width: 100vw;
-    height: 50vh;
+    height: 55vh;
     border-left: none;
     border-top: 1px solid rgba(102, 252, 241, 0.2);
     padding: 16px;
-    gap: 12px;
   }
 }
