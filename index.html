@@ -6,7 +6,7 @@
   <title>RigCraft 3D — Interactive PC Builder</title>
   <link rel="stylesheet" href="style.css" />
 
-  <!-- Three.js & OrbitControls via CDN -->
+  <!-- Three.js & OrbitControls -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
@@ -21,41 +21,50 @@
     <div id="ui-sidebar">
       <div class="sidebar-header">
         <h2>RigCraft 3D</h2>
-        <p class="subtitle">Independent Open-Source PC Configurator</p>
+        <p class="subtitle">Interactive PC Builder & Simulator</p>
       </div>
 
-      <!-- GPU Customizer (Populated dynamically from parts.json) -->
+      <!-- Category Navigation Tabs -->
+      <div class="tab-menu">
+        <button class="tab-btn active" onclick="switchTab('cases')">Case</button>
+        <button class="tab-btn" onclick="switchTab('cpus')">CPU</button>
+        <button class="tab-btn" onclick="switchTab('gpus')">GPU</button>
+        <button class="tab-btn" onclick="switchTab('psus')">PSU</button>
+      </div>
+
+      <!-- Dynamic Selector Section -->
       <div class="config-card">
-        <label>Graphics Card (GPU)</label>
-        <div class="btn-group" id="gpu-btn-group">
-          <!-- Dynamic buttons from parts.json load here -->
+        <label id="category-label">Select Case</label>
+        <div class="btn-group" id="dynamic-btn-group">
+          <!-- Populated dynamically via JS -->
         </div>
       </div>
 
-      <!-- RAM & RGB Controls -->
+      <!-- RAM & RGB Customizer -->
       <div class="config-card">
-        <label>RAM Lighting</label>
+        <label>System Lighting & RGB</label>
         <div class="btn-group">
-          <button onclick="setRGB(true)">RGB Enabled</button>
-          <button onclick="setRGB(false)">Stealth Black</button>
+          <button id="btn-rgb-on" class="active" onclick="setRGB(true)">RGB On</button>
+          <button id="btn-rgb-off" onclick="setRGB(false)">Stealth</button>
         </div>
       </div>
 
-      <!-- Side Panel Maintenance -->
+      <!-- Case Glass Toggle -->
       <div class="config-card">
-        <label>Case Management</label>
+        <label>Chassis Control</label>
         <button id="btn-panel" onclick="toggleSidePanel()">Remove Glass Panel</button>
       </div>
 
-      <!-- Live Compatibility & Specs Overlay -->
+      <!-- Live Specs & Real-Time Compatibility Engine -->
       <div id="spec-summary">
-        <h3>Live Configuration Specs</h3>
+        <h3>Live System Specs</h3>
         <ul>
-          <li><strong>Case:</strong> ATX Mid-Tower Black</li>
+          <li id="selected-case"><strong>Case:</strong> Corsair 5000D Airflow</li>
+          <li id="selected-cpu"><strong>CPU:</strong> Intel Core i9-14900K</li>
           <li id="selected-gpu"><strong>GPU:</strong> NVIDIA RTX 4090</li>
-          <li id="selected-ram"><strong>RAM:</strong> 32GB DDR5 RGB</li>
-          <li id="estimated-power"><strong>Estimated Power:</strong> 650W</li>
-          <li><strong>Compatibility:</strong> <span class="badge-pass">PASS</span></li>
+          <li id="selected-psu"><strong>PSU:</strong> Corsair RM850x (850W)</li>
+          <li id="estimated-power"><strong>Estimated Power:</strong> 703W</li>
+          <li id="compat-status"><strong>Compatibility:</strong> <span class="badge-pass">PASS</span></li>
         </ul>
       </div>
     </div>
