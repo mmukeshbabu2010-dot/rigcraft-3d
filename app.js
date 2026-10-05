@@ -12,7 +12,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 container.appendChild(renderer.domElement);
 
-// Orbit Controls for 360 Rotation
+// Orbit Controls
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.target.set(0, 0, 0);
@@ -30,7 +30,7 @@ const rgbPointLight = new THREE.PointLight(0x66fcf1, 2, 5);
 rgbPointLight.position.set(0, 0.5, 0);
 scene.add(rgbPointLight);
 
-// --- 3. 3D PC CASE & COMPONENTS ---
+// --- 3. 3D OBJECT MESHES ---
 const pcGroup = new THREE.Group();
 scene.add(pcGroup);
 
@@ -68,14 +68,11 @@ function renderGPU(sizeX, colorHex) {
   if (gpuMesh) pcGroup.remove(gpuMesh);
   
   const gpuGeo = new THREE.BoxGeometry(sizeX, 0.4, 1.2);
-  gpuMat.color.setHex(colorHex);
+  gpuMat.color.setHex(parseInt(colorHex));
   gpuMesh = new THREE.Mesh(gpuGeo, gpuMat);
   gpuMesh.position.set(-0.2, -0.2, 0);
   pcGroup.add(gpuMesh);
 }
-
-// Initial GPU Creation
-renderGPU(1.0, 0x45a29e);
 
 // RAM Stick Mesh
 const ramGeo = new THREE.BoxGeometry(0.04, 0.3, 0.4);
@@ -84,24 +81,57 @@ const ram = new THREE.Mesh(ramGeo, ramMat);
 ram.position.set(-0.6, 0.5, 0.2);
 pcGroup.add(ram);
 
-// --- 4. INTERACTION FUNCTIONS ---
+// --- 4. DYNAMIC PARTS DATABASE LOADING ---
+let partsData = {};
+
+async function loadHardwareData() {
+  try {
+    const response = await fetch('parts.json');
+    partsData = await response.json();
+    populateGPUButtons();
+  } catch (error) {
+    console.error('Error loading parts.json:', error);
+  }
+}
+
+function populateGPUButtons() {
+  const container = document.getElementById('gpu-btn-group');
+  if (!container) return;
+  
+  container.innerHTML = ''; // Clear default buttons
+  
+  partsData.gpus.forEach((gpu, index) => {
+    const btn = document.createElement('button');
+    btn.innerText = gpu.name;
+    if (index === 0) btn.classList.add('active');
+    
+    btn.onclick = () => {
+      document.querySelectorAll('#gpu-btn-group button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectGPU(gpu);
+    };
+    
+    container.appendChild(btn);
+  });
+
+  // Render initial default GPU
+  if (partsData.gpus.length > 0) {
+    selectGPU(partsData.gpus[0]);
+  }
+}
+
+function selectGPU(gpu) {
+  renderGPU(gpu.size_x, gpu.color_hex);
+  document.getElementById('selected-gpu').innerText = `GPU: ${gpu.name}`;
+  document.getElementById('estimated-power').innerText = `Estimated Power: ${gpu.power_watts + 200}W`;
+}
+
+// --- 5. UI CONTROLS ---
 let sidePanelRemoved = false;
 function toggleSidePanel() {
   sidePanelRemoved = !sidePanelRemoved;
   glassPanel.visible = !sidePanelRemoved;
   document.getElementById('btn-panel').innerText = sidePanelRemoved ? 'Attach Glass Panel' : 'Remove Glass Panel';
-}
-
-function swapGPU(type) {
-  if (type === 'rtx4090') {
-    renderGPU(1.0, 0x45a29e);
-    document.getElementById('selected-gpu').innerText = 'GPU: NVIDIA RTX 4090 (3-Fan)';
-    document.getElementById('estimated-power').innerText = 'Estimated Power: 650W';
-  } else {
-    renderGPU(0.6, 0x1f2833);
-    document.getElementById('selected-gpu').innerText = 'GPU: NVIDIA RTX 4070 (Compact)';
-    document.getElementById('estimated-power').innerText = 'Estimated Power: 450W';
-  }
 }
 
 function setRGB(state) {
@@ -110,12 +140,15 @@ function setRGB(state) {
   document.getElementById('selected-ram').innerText = state ? 'RAM: 32GB DDR5 (RGB ON)' : 'RAM: 32GB DDR5 (Stealth Black)';
 }
 
-// --- 5. RENDER LOOP & RESIZING ---
+// --- 6. ANIMATION & RESIZING ---
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
   renderer.render(scene, camera);
 }
+
+// Initialize
+loadHardwareData();
 animate();
 
 window.addEventListener('resize', () => {
