@@ -1,11 +1,20 @@
-
+```javascript
 "use strict";
 
+// ============================================================
+// RigCraft 3D — Interactive PC Builder
+// Core application engine
+// Compatible with the existing index.html, style.css and parts.json
+// ============================================================
+
 // --- 1. THREE.JS SCENE SETUP ---
+
 const container = document.getElementById("canvas-container");
 
 if (!container) {
-  throw new Error('RigCraft 3D: Required element "#canvas-container" was not found.');
+  throw new Error(
+    'RigCraft 3D: Required element "#canvas-container" was not found.'
+  );
 }
 
 if (typeof THREE === "undefined" || !THREE.OrbitControls) {
@@ -47,13 +56,20 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 container.appendChild(renderer.domElement);
 
-// Orbit Controls
-const controls = new THREE.OrbitControls(camera, renderer.domElement);
+const controls = new THREE.OrbitControls(
+  camera,
+  renderer.domElement
+);
+
 controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 2.5;
+controls.maxDistance = 12;
 controls.target.set(0, 0, 0);
 
-// --- 2. STUDIO LIGHTING SETUP ---
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+// --- 2. STUDIO LIGHTING ---
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
 scene.add(ambientLight);
 
 const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
@@ -69,11 +85,11 @@ const rgbPointLight = new THREE.PointLight(0x66fcf1, 3, 5);
 rgbPointLight.position.set(0, 0.2, 0);
 scene.add(rgbPointLight);
 
-// --- 3. 3D PC COMPONENT MESHES ---
+// --- 3. MATERIALS AND PC COMPONENTS ---
+
 const pcGroup = new THREE.Group();
 scene.add(pcGroup);
 
-// PBR Materials
 const caseMat = new THREE.MeshStandardMaterial({
   color: 0x1f2833,
   roughness: 0.5,
@@ -82,57 +98,245 @@ const caseMat = new THREE.MeshStandardMaterial({
 
 const moboMat = new THREE.MeshStandardMaterial({
   color: 0x0b0c10,
-  roughness: 0.7
+  roughness: 0.7,
+  metalness: 0.15
 });
 
 const glassMat = new THREE.MeshPhysicalMaterial({
   color: 0xffffff,
   transparent: true,
-  opacity: 0.25,
+  opacity: 0.18,
   roughness: 0.1,
-  transmission: 0.95
+  metalness: 0,
+  side: THREE.DoubleSide,
+  depthWrite: false
 });
 
 const ramMat = new THREE.MeshStandardMaterial({
   color: 0x66fcf1,
   emissive: 0x66fcf1,
-  emissiveIntensity: 0.8
+  emissiveIntensity: 0.8,
+  metalness: 0.3,
+  roughness: 0.25
 });
 
 const gpuMat = new THREE.MeshStandardMaterial({
   color: 0x45a29e,
-  metalness: 0.8,
-  roughness: 0.2
+  metalness: 0.65,
+  roughness: 0.25
 });
 
-// Case Frame
-const caseGeo = new THREE.BoxGeometry(1.6, 2.2, 2.2);
-const caseFrame = new THREE.Mesh(caseGeo, caseMat);
-caseFrame.castShadow = true;
-caseFrame.receiveShadow = true;
+const cpuMat = new THREE.MeshStandardMaterial({
+  color: 0x9ba4b5,
+  metalness: 0.75,
+  roughness: 0.3
+});
+
+const psuMat = new THREE.MeshStandardMaterial({
+  color: 0x202833,
+  metalness: 0.4,
+  roughness: 0.6
+});
+
+const accentMat = new THREE.MeshStandardMaterial({
+  color: 0x45a29e,
+  emissive: 0x45a29e,
+  emissiveIntensity: 0.2,
+  metalness: 0.4,
+  roughness: 0.3
+});
+
+function createBox(width, height, depth, material, position) {
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(width, height, depth),
+    material
+  );
+
+  mesh.position.set(position.x, position.y, position.z);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+
+  return mesh;
+}
+
+// Case frame: build the chassis from bars so the interior can be seen.
+const caseFrame = new THREE.Group();
 pcGroup.add(caseFrame);
 
-// Motherboard
-const moboGeo = new THREE.BoxGeometry(0.05, 1.8, 1.8);
-const motherboard = new THREE.Mesh(moboGeo, moboMat);
-motherboard.position.set(-0.7, 0, 0);
-motherboard.castShadow = true;
+function addCaseBar(width, height, depth, x, y, z) {
+  const bar = createBox(
+    width,
+    height,
+    depth,
+    caseMat,
+    { x, y, z }
+  );
+
+  caseFrame.add(bar);
+}
+
+function buildCaseFrame() {
+  // Dispose the previous chassis geometry before rebuilding.
+  caseFrame.traverse((object) => {
+    if (object.isMesh && object.geometry) {
+      object.geometry.dispose();
+    }
+  });
+
+  caseFrame.clear();
+
+  const width = 1.6;
+  const height = 2.2;
+  const depth = 2.2;
+  const thickness = 0.09;
+
+  // Four vertical corner posts.
+  for (const x of [-width / 2, width / 2]) {
+    for (const z of [-depth / 2, depth / 2]) {
+      addCaseBar(
+        thickness,
+        height,
+        thickness,
+        x,
+        0,
+        z
+      );
+    }
+  }
+
+  // Upper and lower rails along the depth.
+  for (const y of [-height / 2, height / 2]) {
+    for (const x of [-width / 2, width / 2]) {
+      addCaseBar(
+        thickness,
+        thickness,
+        depth,
+        x,
+        y,
+        0
+      );
+    }
+
+    addCaseBar(
+      width,
+      thickness,
+      thickness,
+      0,
+      y,
+      -depth / 2
+    );
+
+    addCaseBar(
+      width,
+      thickness,
+      thickness,
+      0,
+      y,
+      depth / 2
+    );
+  }
+
+  // Rear chassis panel.
+  const rearPanel = createBox(
+    0.035,
+    height - thickness * 2,
+    depth - thickness * 2,
+    caseMat,
+    { x: -width / 2 + 0.03, y: 0, z: 0 }
+  );
+
+  caseFrame.add(rearPanel);
+}
+
+buildCaseFrame();
+
+// Motherboard.
+const motherboard = createBox(
+  0.05,
+  1.8,
+  1.8,
+  moboMat,
+  { x: -0.65, y: 0, z: 0 }
+);
+
 pcGroup.add(motherboard);
 
-// Glass Side Panel
-const glassGeo = new THREE.BoxGeometry(0.02, 2.1, 2.1);
-const glassPanel = new THREE.Mesh(glassGeo, glassMat);
+// Glass side panel.
+const glassPanel = new THREE.Mesh(
+  new THREE.BoxGeometry(0.02, 2.04, 2.04),
+  glassMat
+);
+
 glassPanel.position.set(0.8, 0, 0);
 pcGroup.add(glassPanel);
 
-// RAM Stick Mesh
-const ramGeo = new THREE.BoxGeometry(0.04, 0.3, 0.4);
-const ram = new THREE.Mesh(ramGeo, ramMat);
-ram.position.set(-0.6, 0.5, 0.2);
-ram.castShadow = true;
-pcGroup.add(ram);
+// CPU model.
+const cpuGroup = new THREE.Group();
 
-// Dynamic GPU Mesh with protected insertion animation
+const cpuPackage = createBox(
+  0.12,
+  0.24,
+  0.28,
+  cpuMat,
+  { x: 0, y: 0, z: 0 }
+);
+
+const cpuTop = createBox(
+  0.035,
+  0.17,
+  0.21,
+  accentMat,
+  { x: 0.075, y: 0, z: 0 }
+);
+
+cpuGroup.add(cpuPackage);
+cpuGroup.add(cpuTop);
+cpuGroup.position.set(-0.54, 0.22, -0.25);
+pcGroup.add(cpuGroup);
+
+// RAM model.
+const ramGroup = new THREE.Group();
+
+for (let i = 0; i < 2; i += 1) {
+  const ramStick = createBox(
+    0.045,
+    0.32,
+    0.12,
+    ramMat,
+    { x: 0, y: 0, z: i * 0.16 }
+  );
+
+  ramGroup.add(ramStick);
+}
+
+ramGroup.position.set(-0.55, 0.5, 0.28);
+pcGroup.add(ramGroup);
+
+// PSU model.
+const psuGroup = new THREE.Group();
+
+const psuBody = createBox(
+  0.52,
+  0.42,
+  0.52,
+  psuMat,
+  { x: 0, y: 0, z: 0 }
+);
+
+const psuAccent = createBox(
+  0.015,
+  0.24,
+  0.28,
+  accentMat,
+  { x: 0.27, y: 0, z: 0 }
+);
+
+psuGroup.add(psuBody);
+psuGroup.add(psuAccent);
+psuGroup.position.set(-0.25, -0.77, -0.58);
+pcGroup.add(psuGroup);
+
+// GPU model is rebuilt whenever the selected GPU changes.
 let gpuMesh = null;
 let gpuAnimationToken = 0;
 
@@ -152,43 +356,106 @@ function parseHexColor(value, fallback = 0x45a29e) {
   return fallback;
 }
 
+function disposeObjectGeometry(object) {
+  object.traverse((child) => {
+    if (child.isMesh && child.geometry) {
+      child.geometry.dispose();
+    }
+  });
+}
+
 function renderGPU(sizeX, colorHex) {
-  // Invalidate any animation belonging to the previous GPU.
   gpuAnimationToken += 1;
   const animationToken = gpuAnimationToken;
 
   if (gpuMesh) {
     pcGroup.remove(gpuMesh);
-
-    if (gpuMesh.geometry) {
-      gpuMesh.geometry.dispose();
-    }
-
+    disposeObjectGeometry(gpuMesh);
     gpuMesh = null;
   }
 
   const parsedSize = Number(sizeX);
+
   const safeSizeX =
     Number.isFinite(parsedSize) && parsedSize > 0
       ? Math.min(parsedSize, 3)
       : 0.8;
 
-  const gpuGeo = new THREE.BoxGeometry(safeSizeX, 0.4, 1.2);
+  const gpuGroup = new THREE.Group();
 
   gpuMat.color.setHex(parseHexColor(colorHex));
 
-  gpuMesh = new THREE.Mesh(gpuGeo, gpuMat);
-  gpuMesh.castShadow = true;
-  gpuMesh.receiveShadow = true;
+  // Main graphics card body.
+  const gpuBody = createBox(
+    safeSizeX,
+    0.4,
+    1.2,
+    gpuMat,
+    { x: 0, y: 0, z: 0 }
+  );
 
-  // Starting position: outside the slot.
-  gpuMesh.position.set(0.5, -0.2, 0);
-  pcGroup.add(gpuMesh);
+  gpuGroup.add(gpuBody);
 
-  const targetX = -0.2;
+  // Three simplified fan details.
+  const fanMaterial = new THREE.MeshStandardMaterial({
+    color: 0x111820,
+    metalness: 0.45,
+    roughness: 0.35
+  });
+
+  const fanAccent = new THREE.MeshStandardMaterial({
+    color: parseHexColor(colorHex),
+    emissive: parseHexColor(colorHex),
+    emissiveIntensity: 0.18,
+    metalness: 0.35,
+    roughness: 0.3
+  });
+
+  const fanRadius = 0.14;
+  const fanDepth = 0.025;
+  const fanPositions = [-0.35, 0, 0.35];
+
+  fanPositions.forEach((z) => {
+    const fan = new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        fanRadius,
+        fanRadius,
+        fanDepth,
+        24
+      ),
+      fanMaterial
+    );
+
+    fan.rotation.x = Math.PI / 2;
+    fan.position.set(0, 0.215, z);
+    fan.castShadow = true;
+
+    gpuGroup.add(fan);
+
+    const center = new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        0.045,
+        0.045,
+        fanDepth + 0.01,
+        16
+      ),
+      fanAccent
+    );
+
+    center.rotation.x = Math.PI / 2;
+    center.position.set(0, 0.235, z);
+
+    gpuGroup.add(center);
+  });
+
+  gpuGroup.position.set(0.5, -0.2, 0);
+  pcGroup.add(gpuGroup);
+
+  gpuMesh = gpuGroup;
+
+  const targetX = -0.15;
 
   function animateInsertion() {
-    // Stop if another GPU has been selected.
     if (
       animationToken !== gpuAnimationToken ||
       !gpuMesh ||
@@ -204,15 +471,16 @@ function renderGPU(sizeX, colorHex) {
       return;
     }
 
-    // Smooth movement without overshooting the target.
     gpuMesh.position.x += distance * 0.18;
+
     requestAnimationFrame(animateInsertion);
   }
 
   requestAnimationFrame(animateInsertion);
 }
 
-// --- 4. DATA ENGINE & TAB WORKFLOW ---
+// --- 4. HARDWARE DATA AND TAB WORKFLOW ---
+
 let partsData = {};
 let activeTab = "cases";
 let hardwareDataLoaded = false;
@@ -266,7 +534,10 @@ function setSpecLine(elementId, label, value) {
   const strong = document.createElement("strong");
   strong.textContent = `${label}: `;
 
-  element.replaceChildren(strong, document.createTextNode(value));
+  element.replaceChildren(
+    strong,
+    document.createTextNode(String(value))
+  );
 }
 
 function showLoadError(message) {
@@ -302,10 +573,12 @@ function showLoadError(message) {
 
     statusBadge.append(strong, badge);
   }
+
+  setText("estimated-power", "Estimated Power: Unavailable");
 }
 
 function validateHardwareData(data) {
-  if (!data || typeof data !== "object") {
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
     throw new Error("The hardware catalogue must be a JSON object.");
   }
 
@@ -319,13 +592,11 @@ function validateHardwareData(data) {
     const ids = new Set();
 
     data[category].forEach((item, index) => {
-      if (!item || typeof item !== "object") {
-        throw new Error(
-          `Invalid hardware entry at ${category}[${index}].`
-        );
+      if (!item || typeof item !== "object" || Array.isArray(item)) {
+        throw new Error(`Invalid hardware entry at ${category}[${index}].`);
       }
 
-      if (item.id === undefined || item.id === null) {
+      if (item.id === undefined || item.id === null || String(item.id).trim() === "") {
         throw new Error(
           `Hardware entry ${index + 1} in "${category}" is missing its id.`
         );
@@ -367,13 +638,16 @@ async function loadHardwareData() {
 
     partsData = data;
 
-    // Set the default configuration.
     currentSelection.case = partsData.cases[0];
     currentSelection.cpu = partsData.cpus[0];
     currentSelection.gpu = partsData.gpus[0];
     currentSelection.psu = partsData.psus[0];
 
     hardwareDataLoaded = true;
+
+    applySelectedCase();
+    applySelectedCPU();
+    applySelectedPSU();
 
     renderGPU(
       currentSelection.gpu.size_x,
@@ -382,6 +656,7 @@ async function loadHardwareData() {
 
     switchTab("gpus");
     updateSpecsAndCompatibility();
+    setRGB(true);
   } catch (error) {
     hardwareDataLoaded = false;
 
@@ -390,6 +665,53 @@ async function loadHardwareData() {
         ? error.message
         : "An unknown error occurred while loading hardware data."
     );
+  }
+}
+
+function applySelectedCase() {
+  const selectedCase = currentSelection.case;
+
+  if (!selectedCase) {
+    return;
+  }
+
+  caseMat.color.setHex(
+    parseHexColor(selectedCase.color_hex, 0x1f2833)
+  );
+
+  caseMat.needsUpdate = true;
+}
+
+function applySelectedCPU() {
+  const selectedCPU = currentSelection.cpu;
+
+  if (!selectedCPU) {
+    return;
+  }
+
+  // Different sockets receive different visual accent colors.
+  const socket = String(selectedCPU.socket || "").toUpperCase();
+
+  const color = socket === "AM5" ? 0xe63946 : 0x45a29e;
+
+  accentMat.color.setHex(color);
+  accentMat.emissive.setHex(color);
+}
+
+function applySelectedPSU() {
+  const selectedPSU = currentSelection.psu;
+
+  if (!selectedPSU) {
+    return;
+  }
+
+  const wattage = getValidNumber(selectedPSU.wattage);
+
+  // Visual accent only; this does not represent a physical PSU model.
+  if (wattage !== null && wattage >= 850) {
+    psuAccent.material.color.setHex(0x66fcf1);
+  } else {
+    psuAccent.material.color.setHex(0x45a29e);
   }
 }
 
@@ -408,7 +730,6 @@ function switchTab(category) {
 
   activeTab = category;
 
-  // Clear the active state from all tab buttons.
   const tabButtons = document.querySelectorAll(".tab-menu .tab-btn");
 
   tabButtons.forEach((button) => {
@@ -436,6 +757,7 @@ function switchTab(category) {
 
   partsData[category].forEach((item) => {
     const button = document.createElement("button");
+
     button.type = "button";
     button.textContent = item.name;
 
@@ -444,21 +766,36 @@ function switchTab(category) {
       String(selectedItem.id) === String(item.id)
     ) {
       button.classList.add("active");
+      button.setAttribute("aria-pressed", "true");
+    } else {
+      button.setAttribute("aria-pressed", "false");
     }
 
     button.addEventListener("click", () => {
       currentSelection[config.selectionKey] = item;
 
-      // Update the selected-button state.
       buttonGroup.querySelectorAll("button").forEach((otherButton) => {
         otherButton.classList.remove("active");
+        otherButton.setAttribute("aria-pressed", "false");
       });
 
       button.classList.add("active");
+      button.setAttribute("aria-pressed", "true");
 
-      // Update the GPU model when a different GPU is selected.
+      if (category === "cases") {
+        applySelectedCase();
+      }
+
+      if (category === "cpus") {
+        applySelectedCPU();
+      }
+
       if (category === "gpus") {
         renderGPU(item.size_x, item.color_hex);
+      }
+
+      if (category === "psus") {
+        applySelectedPSU();
       }
 
       updateSpecsAndCompatibility();
@@ -468,7 +805,8 @@ function switchTab(category) {
   });
 }
 
-// --- 5. REAL-TIME COMPATIBILITY CHECKER ---
+// --- 5. POWER ESTIMATION AND COMPATIBILITY CHECKER ---
+
 function getValidNumber(value) {
   if (value === null || value === undefined || value === "") {
     return null;
@@ -485,7 +823,6 @@ function updateSpecsAndCompatibility() {
   const selectedGPU = currentSelection.gpu;
   const selectedPSU = currentSelection.psu;
 
-  // Keep the original specification labels.
   setSpecLine(
     "selected-case",
     "Case",
@@ -512,12 +849,7 @@ function updateSpecsAndCompatibility() {
 
   const statusBadge = document.getElementById("compat-status");
 
-  if (
-    !selectedCase ||
-    !selectedCPU ||
-    !selectedGPU ||
-    !selectedPSU
-  ) {
+  if (!selectedCase || !selectedCPU || !selectedGPU || !selectedPSU) {
     setText("estimated-power", "Estimated Power: Unavailable");
 
     if (statusBadge) {
@@ -545,7 +877,6 @@ function updateSpecsAndCompatibility() {
   const issues = [];
   let totalWatts = null;
 
-  // Check 1: Validate the power data.
   if (cpuWatts === null || cpuWatts < 0) {
     issues.push("CPU power data is missing or invalid.");
   }
@@ -558,8 +889,8 @@ function updateSpecsAndCompatibility() {
     issues.push("Power supply wattage data is missing or invalid.");
   }
 
-  // Estimate power only when both component values are available.
-  // The existing 50W baseline is retained for consistency.
+  // Retain the existing baseline estimate for this version.
+  // This is an estimate, not a measured system power draw.
   if (
     cpuWatts !== null &&
     cpuWatts >= 0 &&
@@ -576,7 +907,6 @@ function updateSpecsAndCompatibility() {
     setText("estimated-power", "Estimated Power: Unavailable");
   }
 
-  // Check 2: GPU clearance.
   if (gpuLength === null || gpuLength <= 0) {
     issues.push("GPU length data is missing or invalid.");
   }
@@ -595,7 +925,6 @@ function updateSpecsAndCompatibility() {
     issues.push("GPU exceeds case length clearance!");
   }
 
-  // Check 3: PSU capacity.
   if (
     totalWatts !== null &&
     psuWatts !== null &&
@@ -605,7 +934,6 @@ function updateSpecsAndCompatibility() {
     issues.push("Power supply wattage insufficient!");
   }
 
-  // Display every detected issue instead of hiding all but the first.
   if (statusBadge) {
     statusBadge.replaceChildren();
 
@@ -617,12 +945,12 @@ function updateSpecsAndCompatibility() {
     if (issues.length === 0) {
       badge.className = "badge-pass";
       badge.textContent = "PASS";
-      statusBadge.append(strong, badge);
     } else {
       badge.className = "badge-fail";
       badge.textContent = `FAIL: ${issues.join(" ")}`;
-      statusBadge.append(strong, badge);
     }
+
+    statusBadge.append(strong, badge);
 
     statusBadge.title =
       issues.length > 0
@@ -632,11 +960,11 @@ function updateSpecsAndCompatibility() {
 }
 
 // --- 6. UI TOGGLES ---
+
 let sidePanelRemoved = false;
 
 function toggleSidePanel() {
   sidePanelRemoved = !sidePanelRemoved;
-
   glassPanel.visible = !sidePanelRemoved;
 
   const button = document.getElementById("btn-panel");
@@ -645,6 +973,8 @@ function toggleSidePanel() {
     button.textContent = sidePanelRemoved
       ? "Attach Glass Panel"
       : "Remove Glass Panel";
+
+    button.setAttribute("aria-pressed", String(sidePanelRemoved));
   }
 }
 
@@ -659,14 +989,17 @@ function setRGB(state) {
 
   if (onButton) {
     onButton.classList.toggle("active", enabled);
+    onButton.setAttribute("aria-pressed", String(enabled));
   }
 
   if (offButton) {
     offButton.classList.toggle("active", !enabled);
+    offButton.setAttribute("aria-pressed", String(!enabled));
   }
 }
 
-// --- 7. ANIMATION LOOP & RESIZING ---
+// --- 7. ANIMATION LOOP AND RESIZING ---
+
 function animate() {
   requestAnimationFrame(animate);
 
@@ -684,7 +1017,6 @@ function handleResize() {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 }
 
-// Avoid starting multiple animation loops.
 if (!animationStarted) {
   animationStarted = true;
   animate();
@@ -692,11 +1024,17 @@ if (!animationStarted) {
 
 window.addEventListener("resize", handleResize);
 
-// Recalculate the canvas if its container changes size without a window resize.
 if (typeof ResizeObserver !== "undefined") {
   const containerResizeObserver = new ResizeObserver(handleResize);
   containerResizeObserver.observe(container);
 }
 
 // --- 8. INITIALIZE RIGCRAFT 3D ---
+
 loadHardwareData();
+
+// Preserve the existing inline HTML onclick handlers.
+window.switchTab = switchTab;
+window.setRGB = setRGB;
+window.toggleSidePanel = toggleSidePanel;
+```
