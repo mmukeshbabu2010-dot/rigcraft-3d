@@ -2,119 +2,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta
-    name="description"
-    content="RigCraft 3D is an independent interactive PC building and simulation project."
-  />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0c10">
+  <meta name="description" content="RigCraft 3D is an independent interactive PC building and simulation project.">
   <title>RigCraft 3D — Interactive PC Builder</title>
-  <link rel="stylesheet" href="style.css" />
-
-  <!-- Three.js & OrbitControls -->
+  <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
-
-  <div id="app-container">
-
-    <!-- 3D Viewport -->
-    <div id="canvas-container"></div>
-
-    <!-- UI Configurator Sidebar -->
-    <div id="ui-sidebar">
-      <div class="sidebar-header">
-        <h2>RigCraft 3D</h2>
-        <p class="subtitle">Interactive PC Builder &amp; Simulator</p>
+  <main id="app-container">
+    <section id="viewport" aria-label="Interactive 3D PC model">
+      <div id="canvas-container"></div>
+      <div class="viewport-label">
+        <span class="live-dot"></span>
+        3D BUILD VIEW
       </div>
-
-      <!-- Category Navigation Tabs -->
-      <div class="tab-menu">
-        <button class="tab-btn active" onclick="switchTab('cases')">Case</button>
-        <button class="tab-btn" onclick="switchTab('cpus')">CPU</button>
-        <button class="tab-btn" onclick="switchTab('gpus')">GPU</button>
-        <button class="tab-btn" onclick="switchTab('psus')">PSU</button>
+      <div class="camera-controls" aria-label="Camera controls">
+        <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
+        <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
+        <button id="reset-camera" type="button">Reset view</button>
       </div>
+      <p class="viewport-hint">Drag to rotate · Scroll or pinch to zoom</p>
+    </section>
 
-      <!-- Dynamic Selector Section -->
-      <div class="config-card">
-        <label id="category-label">Select Case</label>
-        <div class="btn-group" id="dynamic-btn-group">
-          <!-- Populated dynamically via JS -->
+    <aside id="ui-sidebar">
+      <header class="sidebar-header">
+        <div class="brand-mark" aria-hidden="true">R</div>
+        <div>
+          <h1>RigCraft <span>3D</span></h1>
+          <p class="subtitle">Interactive PC Builder &amp; Simulator</p>
         </div>
-      </div>
+      </header>
 
-      <!-- RAM & RGB Customizer -->
-      <div class="config-card">
-        <label>System Lighting &amp; RGB</label>
-        <div class="btn-group">
-          <button id="btn-rgb-on" class="active" onclick="setRGB(true)">RGB On</button>
-          <button id="btn-rgb-off" onclick="setRGB(false)">Stealth</button>
-        </div>
-      </div>
-
-      <!-- Case Glass Toggle -->
-      <div class="config-card">
-        <label>Chassis Control</label>
-        <button id="btn-panel" onclick="toggleSidePanel()">Remove Glass Panel</button>
-      </div>
-
-      <!-- Live Specs & Real-Time Compatibility Engine -->
-      <div id="spec-summary">
-        <h3>Live System Specs</h3>
-        <ul>
-          <li id="selected-case"><strong>Case:</strong> Corsair 5000D Airflow</li>
-          <li id="selected-cpu"><strong>CPU:</strong> Intel Core i9-14900K</li>
-          <li id="selected-gpu"><strong>GPU:</strong> NVIDIA RTX 4090</li>
-          <li id="selected-psu"><strong>PSU:</strong> Corsair RM850x (850W)</li>
-          <li id="estimated-power"><strong>Estimated Power:</strong> 703W</li>
-          <li id="compat-status"><strong>Compatibility:</strong> <span class="badge-pass">PASS</span></li>
-        </ul>
-      </div>
-
-      <!-- Independent Project & Trademark Disclaimer -->
-      <section id="disclaimer" aria-labelledby="disclaimer-heading">
-        <h3 id="disclaimer-heading">
-          Independent Project &amp; Trademark Disclaimer
-        </h3>
-
-        <p>
-          RigCraft 3D is an independent, fan-made PC building and simulation
-          project. It is not affiliated with, endorsed by, sponsored by, or
-          officially connected to Corsair, NVIDIA, AMD, Intel, or any other
-          hardware manufacturer mentioned on this website.
-        </p>
-
-        <p>
-          All company names, product names, logos, and trademarks belong to
-          their respective owners and are used only to identify or describe
-          the relevant products. Their appearance does not imply any
-          partnership or endorsement.
-        </p>
-
-        <p>
-          3D models and visual representations are simulations for
-          informational and demonstration purposes. Actual product designs,
-          dimensions, labels, lighting, and specifications may differ.
-          Always verify product information with the manufacturer before
-          making a purchase.
-        </p>
+      <section class="config-card">
+        <label for="dynamic-btn-group">Hardware configuration</label>
+        <nav class="tab-menu" aria-label="Hardware categories">
+          <button class="tab-btn active" data-category="cases" type="button">Case</button>
+          <button class="tab-btn" data-category="motherboards" type="button">Board</button>
+          <button class="tab-btn" data-category="cpus" type="button">CPU</button>
+          <button class="tab-btn" data-category="gpus" type="button">GPU</button>
+          <button class="tab-btn" data-category="psus" type="button">PSU</button>
+        </nav>
+        <p id="category-label">Select Case</p>
+        <div id="dynamic-btn-group" class="hardware-options" aria-live="polite"></div>
       </section>
 
-      <p class="site-footer">
-        &copy; <span id="copyright-year">2026</span> RigCraft 3D.
-        Independent project. Not affiliated with hardware manufacturers.
-      </p>
-    </div>
+      <section class="config-card">
+        <label for="rgb-color">System lighting</label>
+        <div class="rgb-row">
+          <input id="rgb-color" type="color" value="#66fcf1" aria-label="Choose RGB color">
+          <span id="rgb-color-label">Arctic cyan</span>
+        </div>
+        <div class="button-row">
+          <button id="btn-rgb-on" class="active" type="button" aria-pressed="true">RGB On</button>
+          <button id="btn-rgb-off" type="button" aria-pressed="false">Stealth</button>
+        </div>
+      </section>
 
-  </div>
+      <section class="config-card">
+        <label>Chassis controls</label>
+        <div class="button-row">
+          <button id="btn-panel" type="button" aria-pressed="false">Remove glass</button>
+          <button id="btn-fans" type="button" aria-pressed="true">Fans: On</button>
+        </div>
+      </section>
+
+      <section id="spec-summary" class="config-card">
+        <div class="section-heading">
+          <h2>Live system specs</h2>
+          <span class="small-tag">LIVE</span>
+        </div>
+        <ul>
+          <li id="selected-case"><strong>Case:</strong> Loading…</li>
+          <li id="selected-motherboard"><strong>Motherboard:</strong> Loading…</li>
+          <li id="selected-cpu"><strong>CPU:</strong> Loading…</li>
+          <li id="selected-gpu"><strong>GPU:</strong> Loading…</li>
+          <li id="selected-psu"><strong>PSU:</strong> Loading…</li>
+          <li id="estimated-power"><strong>Estimated power:</strong> —</li>
+        </ul>
+        <div id="compat-status" role="status" aria-live="polite">
+          <strong>Compatibility:</strong> Checking…
+        </div>
+        <ul id="compat-issues" class="compat-issues" aria-live="polite"></ul>
+        <p class="fine-print">Power figures are estimates, not measured consumption. A PASS only covers the checks implemented here.</p>
+      </section>
+
+      <section id="disclaimer" aria-labelledby="disclaimer-heading">
+        <h2 id="disclaimer-heading">Independent Project &amp; Trademark Disclaimer</h2>
+        <p>RigCraft 3D is an independent, fan-made PC building and simulation project. It is not affiliated with, endorsed by, sponsored by, or officially connected to Corsair, NVIDIA, AMD, Intel, or any other hardware manufacturer mentioned on this website.</p>
+        <p>All company names, product names, logos, and trademarks belong to their respective owners and are used only to identify or describe the relevant products. Their appearance does not imply any partnership or endorsement.</p>
+        <p>3D models and visual representations are simulations for informational and demonstration purposes. Actual product designs, dimensions, labels, lighting, and specifications may differ. Always verify product information with the manufacturer before making a purchase.</p>
+      </section>
+
+      <footer class="site-footer">
+        © <span id="copyright-year"></span> RigCraft 3D. Independent project.
+      </footer>
+    </aside>
+  </main>
 
   <script>
     document.getElementById("copyright-year").textContent =
-      new Date().getFullYear();
+      String(new Date().getFullYear());
   </script>
   <script src="app.js"></script>
 </body>
 </html>
-```
