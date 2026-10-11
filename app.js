@@ -1,4 +1,4 @@
-```javascript
+
 "use strict";
 
 // ============================================================
@@ -1037,4 +1037,3 @@ loadHardwareData();
 window.switchTab = switchTab;
 window.setRGB = setRGB;
 window.toggleSidePanel = toggleSidePanel;
-```
