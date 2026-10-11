@@ -1,8 +1,13 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta
+    name="description"
+    content="RigCraft 3D is an independent interactive PC building and simulation project."
+  />
   <title>RigCraft 3D — Interactive PC Builder</title>
   <link rel="stylesheet" href="style.css" />
 
@@ -13,7 +18,7 @@
 <body>
 
   <div id="app-container">
-    
+
     <!-- 3D Viewport -->
     <div id="canvas-container"></div>
 
@@ -21,7 +26,7 @@
     <div id="ui-sidebar">
       <div class="sidebar-header">
         <h2>RigCraft 3D</h2>
-        <p class="subtitle">Interactive PC Builder & Simulator</p>
+        <p class="subtitle">Interactive PC Builder &amp; Simulator</p>
       </div>
 
       <!-- Category Navigation Tabs -->
@@ -42,7 +47,7 @@
 
       <!-- RAM & RGB Customizer -->
       <div class="config-card">
-        <label>System Lighting & RGB</label>
+        <label>System Lighting &amp; RGB</label>
         <div class="btn-group">
           <button id="btn-rgb-on" class="active" onclick="setRGB(true)">RGB On</button>
           <button id="btn-rgb-off" onclick="setRGB(false)">Stealth</button>
@@ -67,10 +72,49 @@
           <li id="compat-status"><strong>Compatibility:</strong> <span class="badge-pass">PASS</span></li>
         </ul>
       </div>
+
+      <!-- Independent Project & Trademark Disclaimer -->
+      <section id="disclaimer" aria-labelledby="disclaimer-heading">
+        <h3 id="disclaimer-heading">
+          Independent Project &amp; Trademark Disclaimer
+        </h3>
+
+        <p>
+          RigCraft 3D is an independent, fan-made PC building and simulation
+          project. It is not affiliated with, endorsed by, sponsored by, or
+          officially connected to Corsair, NVIDIA, AMD, Intel, or any other
+          hardware manufacturer mentioned on this website.
+        </p>
+
+        <p>
+          All company names, product names, logos, and trademarks belong to
+          their respective owners and are used only to identify or describe
+          the relevant products. Their appearance does not imply any
+          partnership or endorsement.
+        </p>
+
+        <p>
+          3D models and visual representations are simulations for
+          informational and demonstration purposes. Actual product designs,
+          dimensions, labels, lighting, and specifications may differ.
+          Always verify product information with the manufacturer before
+          making a purchase.
+        </p>
+      </section>
+
+      <p class="site-footer">
+        &copy; <span id="copyright-year">2026</span> RigCraft 3D.
+        Independent project. Not affiliated with hardware manufacturers.
+      </p>
     </div>
 
   </div>
 
+  <script>
+    document.getElementById("copyright-year").textContent =
+      new Date().getFullYear();
+  </script>
   <script src="app.js"></script>
 </body>
 </html>
+```
