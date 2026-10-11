@@ -1,3 +1,4 @@
+```css
 * {
   box-sizing: border-box;
   margin: 0;
@@ -6,12 +7,13 @@
   -webkit-user-select: none;
 }
 
-body, html {
+body,
+html {
   width: 100%;
   height: 100%;
   overflow: hidden;
   background-color: #0b0c10;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   color: #c5c6c7;
 }
 
@@ -24,6 +26,7 @@ body, html {
 
 #canvas-container {
   flex: 1;
+  min-width: 0;
   height: 100%;
   position: relative;
 }
@@ -31,6 +34,7 @@ body, html {
 /* UI Configurator Sidebar */
 #ui-sidebar {
   width: 360px;
+  flex-shrink: 0;
   background: #1f2833;
   padding: 24px;
   display: flex;
@@ -40,6 +44,9 @@ body, html {
   box-shadow: -5px 0 25px rgba(0, 0, 0, 0.6);
   z-index: 10;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: #45a29e #0b0c10;
+  scrollbar-width: thin;
 }
 
 .sidebar-header h2 {
@@ -70,7 +77,8 @@ body, html {
   color: #c5c6c7;
 }
 
-.tab-btn:hover, .tab-btn.active {
+.tab-btn:hover,
+.tab-btn.active {
   background: #45a29e;
   color: #0b0c10;
 }
@@ -110,10 +118,16 @@ button {
   transition: all 0.2s ease-in-out;
 }
 
-button:hover, button.active {
+button:hover,
+button.active {
   background: #66fcf1;
   color: #0b0c10;
   border-color: #66fcf1;
+}
+
+button:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
 }
 
 /* Specs & Validation Box */
@@ -135,6 +149,7 @@ button:hover, button.active {
   list-style: none;
   font-size: 0.82rem;
   line-height: 1.8;
+  overflow-wrap: anywhere;
 }
 
 .badge-pass {
@@ -153,6 +168,45 @@ button:hover, button.active {
   font-weight: bold;
 }
 
+/* Independent Project & Trademark Disclaimer */
+#disclaimer {
+  background: #111820;
+  border: 1px solid rgba(102, 252, 241, 0.22);
+  border-left: 3px solid #45a29e;
+  border-radius: 8px;
+  padding: 14px;
+  margin-top: 4px;
+}
+
+#disclaimer h3 {
+  color: #66fcf1;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+#disclaimer p {
+  color: #aeb6c0;
+  font-size: 0.75rem;
+  line-height: 1.65;
+  margin-bottom: 10px;
+  overflow-wrap: anywhere;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+#disclaimer p:last-child {
+  margin-bottom: 0;
+}
+
+.site-footer {
+  color: #7f8b98;
+  font-size: 0.7rem;
+  line-height: 1.6;
+  text-align: center;
+  padding: 0 4px 4px;
+}
+
 /* Responsive Mobile Layout */
 @media (max-width: 768px) {
   #app-container {
@@ -160,15 +214,24 @@ button:hover, button.active {
   }
 
   #canvas-container {
+    flex: 0 0 45vh;
     height: 45vh;
-    width: 100vw;
+    width: 100%;
   }
 
   #ui-sidebar {
-    width: 100vw;
+    width: 100%;
     height: 55vh;
+    flex: 1 1 auto;
+    min-height: 0;
     border-left: none;
     border-top: 1px solid rgba(102, 252, 241, 0.2);
     padding: 16px;
+    gap: 12px;
+  }
+
+  #spec-summary {
+    margin-top: 0;
   }
 }
+```
