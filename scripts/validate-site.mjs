@@ -69,7 +69,7 @@ assert.match(workspaceSource, /textContent="Delete"/, "Saved snapshots must expo
 
 const parts = JSON.parse(read("parts.json"));
 const requirements = {
-  cases: ["id", "name", "max_gpu_length_mm", "max_cooler_height_mm"],
+  cases: ["id", "name", "max_gpu_length_mm", "max_cooler_height_mm", "supported_form_factors"],
   motherboards: ["id", "name", "socket", "form_factor"],
   cpus: ["id", "name", "socket", "power_watts"],
   gpus: ["id", "name", "length_mm", "power_watts"],
@@ -87,6 +87,22 @@ for (const [category, fields] of Object.entries(requirements)) {
       assert.ok(Number.isFinite(Number(part[field])) && Number(part[field]) > 0, `${category}[${index}].${field} must be positive numeric data`);
     }
   }
+}
+
+const knownFormFactors = new Set(["ATX", "MICRO-ATX", "MINI-ITX"]);
+for (const item of parts.cases) {
+  assert.ok(Array.isArray(item.supported_form_factors) && item.supported_form_factors.length > 0,
+    `cases.${item.id}: supported_form_factors must be a non-empty array`);
+  for (const value of item.supported_form_factors) {
+    assert.ok(knownFormFactors.has(String(value).trim().toUpperCase()),
+      `cases.${item.id}: unknown supported form factor ${value}`);
+  }
+}
+for (const board of parts.motherboards) {
+  const formFactor = String(board.form_factor).trim().toUpperCase();
+  assert.ok(knownFormFactors.has(formFactor), `motherboards.${board.id}: unknown form factor ${formFactor}`);
+  assert.ok(parts.cases.some((item) => item.supported_form_factors.some((value) => String(value).trim().toUpperCase() === formFactor)),
+    `motherboards.${board.id}: no case lists support for ${formFactor}`);
 }
 
 assert.ok(fs.existsSync(path.join(root, "vendor/THREE-LICENSE.txt")), "Third-party license notice is missing");

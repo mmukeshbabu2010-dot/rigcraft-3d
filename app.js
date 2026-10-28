@@ -928,20 +928,17 @@ function compatibilityCheck() {
     }
   }
 
-  const formFactor = String(m.form_factor || "").toUpperCase();
+  const formFactor = String(m.form_factor || "").trim().toUpperCase();
+  const supportedFormFactors = Array.isArray(c.supported_form_factors)
+    ? c.supported_form_factors.map((value) => String(value).trim().toUpperCase()).filter(Boolean)
+    : [];
 
-  if (formFactor === "ATX" && c.id === "compact-itx") {
-    issues.push("An ATX motherboard may not fit this Mini-ITX case.");
-  }
-
-  if (formFactor === "MICRO-ATX" && c.id === "compact-itx") {
-    issues.push("A Micro-ATX motherboard may not fit this Mini-ITX case.");
-  }
-
-  if (formFactor === "MINI-ITX" && c.id === "corsair-5000d") {
-    unknown.push(
-      "Motherboard fits are not fully modeled; verify mounting compatibility."
-    );
+  if (!formFactor) {
+    unknown.push("Motherboard form-factor information is missing.");
+  } else if (!supportedFormFactors.length) {
+    unknown.push("Case motherboard form-factor support is not recorded; verify fit.");
+  } else if (!supportedFormFactors.includes(formFactor)) {
+    issues.push(`${m.form_factor} motherboard is not listed as supported by ${c.name}.`);
   }
 
   let status = "PASS";
@@ -1014,6 +1011,13 @@ function validateParts(data) {
       }
 
       ids.add(item.id);
+
+      if (category === "cases") {
+        if (!Array.isArray(item.supported_form_factors) || !item.supported_form_factors.length ||
+            item.supported_form_factors.some((value) => typeof value !== "string" || !value.trim())) {
+          throw new Error(`Invalid motherboard form-factor support in case ${item.id}.`);
+        }
+      }
     }
   }
 }

@@ -25,5 +25,8 @@ jobs:
           node --check app.js
           node --check js/workspace.js
           node --check scripts/validate-site.mjs
+          node --check scripts/test-compatibility.mjs
       - name: Validate pages, local assets, and parts catalogue
-        run: node scripts/validate-site.mjs
+        run: |
+          node scripts/validate-site.mjs
+          node scripts/test-compatibility.mjs

@@ -8,7 +8,7 @@ RigCraft 3D is a browser-based PC configurator with an interactive Three.js view
 
 - Rotate and inspect a procedural 3D PC assembly.
 - Choose sample cases, motherboards, CPUs, GPUs, and power supplies.
-- View basic compatibility messages and an estimated power requirement based on the sample data.
+- View basic compatibility messages for CPU/motherboard sockets, case GPU clearance, listed motherboard/case form factors, and estimated power based on sample data.
 - Set a region preference, with India as the first-visit default.
 - Save up to 20 build snapshots in browser local storage, restore a saved component selection, delete saved snapshots, and export a snapshot as JSON.
 - Read the Privacy Policy and Terms and Conditions from the site footer.
@@ -16,7 +16,7 @@ RigCraft 3D is a browser-based PC configurator with an interactive Three.js view
 ## Current limitations
 
 - The 3D geometry is illustrative, not manufacturer CAD or a guarantee of physical fit.
-- The included parts catalogue is small sample data. Compatibility checks are incomplete and must not replace manufacturer specifications.
+- The included parts catalogue is small sample data. Compatibility checks are incomplete, and case fit metadata is illustrative. Always confirm clearances and supported form factors against manufacturer specifications.
 - There is no live retailer pricing, stock feed, or currency conversion.
 - Snapshots store selected catalogue part IDs plus displayed specifications. Older snapshots can be restored when their saved part names still match the current catalogue. Snapshots do not include pricing.
 - There are no accounts, cloud sync, or cloud backup.
@@ -40,10 +40,12 @@ The project includes dependency-free static checks and a GitHub Actions workflow
 node --check app.js
 node --check js/workspace.js
 node --check scripts/validate-site.mjs
+node --check scripts/test-compatibility.mjs
 node scripts/validate-site.mjs
+node scripts/test-compatibility.mjs
 ```
 
-The checks cover local HTML links and assets, duplicate IDs, in-page anchors, script syntax, remote font/script references, the shape of the parts catalogue, and the saved-build restore controls/API. They do not replace manual browser, accessibility, legal, or security review.
+The checks cover local HTML links and assets, duplicate IDs, in-page anchors, script syntax, remote font/script references, the shape of the parts catalogue, the saved-build restore controls/API, and case/board fit metadata. A focused behavior test exercises unsupported form-factor and CPU socket mismatches. They do not replace manual browser, accessibility, legal, or security review.
 
 ## Third-party code
 
