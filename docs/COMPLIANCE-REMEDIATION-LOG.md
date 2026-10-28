@@ -2,40 +2,34 @@
 
 Updated: 28 October 2026
 
-This log records source-level changes and known gaps. It is not legal advice, a formal audit, or a guarantee that the deployed service complies with every applicable law.
+This log records repository-level changes and known gaps. It is not legal advice, a formal audit, or a guarantee that the deployed service complies with every applicable law.
 
-## Changes made in this commit
+## Changes in the current work
 
-- Added `favicon.svg` and linked it from the builder and legal pages.
-- Added a Privacy Policy describing browser-local workspace storage and the currently loaded third-party script CDNs.
-- Added Terms and Conditions describing the prototype, limitations of component/compatibility data, local exports, and intellectual-property boundaries.
-- Added persistent footer links to both legal pages and a project issue tracker contact route.
-- Replaced vague hero copy with a specific explanation of what the builder does.
-- Changed quick links from pill-like styling to a restrained rectangular treatment and removed button hover translation.
-- Added visible focus styling for the hardware configuration target and a hidden-but-accessible label for the RGB color input.
-- Respected `prefers-reduced-motion` in the primary action and shared CSS.
-- Added a referrer policy to the page and current external script tags.
+- Self-hosted the existing Three.js r128 and matching OrbitControls r128 files under `vendor/` to remove the builder's third-party JavaScript CDN requests. Added upstream license and provenance/checksum documentation.
+- Updated the Privacy Policy to distinguish locally hosted JavaScript from hosting-provider request logs and external links.
+- Rewrote the README to describe verified capabilities and explicitly identify unimplemented virtual OS and synthetic benchmark features, missing live pricing, and the limits of the snapshot workspace.
+- Added dependency-free static validation for local HTML links/assets, duplicate IDs, in-page fragments, inline script syntax, remote script/font requests, and required parts catalogue fields.
+- Added a GitHub Actions workflow to run JavaScript syntax checks and the static validation script on pushes and pull requests.
 
-## Source-level findings and remaining actions
+## Verified by source inspection
 
-- The frontend currently requests Three.js from `cdnjs.cloudflare.com` and OrbitControls from `cdn.jsdelivr.net`. `referrerpolicy="no-referrer"` reduces referrer disclosure but does not prevent the providers from receiving the request IP and technical request metadata. Review whether to self-host pinned vendor files and verify their licenses before production.
-- No Google Fonts import or external font request was identified in the inspected HTML and JavaScript. The font stack uses local system fonts. Re-check the full deployed network trace and CSS if dependencies change.
-- The inspected application source did not intentionally include analytics, advertising pixels, or session replay. No vendor dashboards or deployed network trace were inspected, so this is not a complete tracker audit.
-- The inspected markup did not include account signup, a waitlist, marketing email collection, checkout, subscription billing, or user uploads. COPPA signup, CAN-SPAM email, Stripe disclosures, and upload licenses are therefore not implemented because those flows do not currently exist. Re-audit before adding any of them.
-- The workspace stores region preference and user-triggered build snapshots in browser local storage. The policy explains this and the browser-based deletion path. Confirm retention behavior and jurisdiction-specific storage consent needs with legal counsel.
-- The issue tracker is the current public project contact route. Do not post sensitive information there. A dedicated privacy contact and verified operator identity/address may be required for production, depending on the operator's location and applicable law.
-- The Terms page intentionally does not invent a governing law, venue, legal entity, or postal address. These must be decided and reviewed by the project operator before commercial production launch.
-- This commit does not change the public repository's existing MIT license. Making the repository private or adding proprietary terms requires a separate decision and review of rights already granted under the existing license.
+- The builder references locally hosted `vendor/three-r128.min.js` and `vendor/OrbitControls-r128.js` rather than remote JavaScript CDNs.
+- The upstream MIT license and SHA-256 checksums are recorded in `vendor/`.
+- No Google Fonts request was found in the inspected CSS/HTML.
+- The workspace stores region preference and user-triggered build snapshots in browser local storage; snapshots capture visible specification text and do not restore a selected build or include prices.
+- The repository remains public under its existing MIT license. This work does not change repository visibility or license.
 
-## Verification still required
+## Remaining actions before a production/commercial launch
 
-- [ ] Validate all internal links on the deployed host, including path and case sensitivity.
-- [ ] Run a real browser/network inspection on the deployed site for all requests, cookies, storage, console errors, and third-party behavior.
-- [ ] Test keyboard navigation, screen-reader semantics, zoom, contrast, narrow screens, and reduced-motion behavior.
-- [ ] Run automated HTML/CSS/JavaScript checks and manual desktop/mobile regression tests.
-- [ ] Review licenses and security advisories for Three.js, OrbitControls, and all assets.
-- [ ] Have a qualified reviewer assess privacy notice, terms, applicable laws, operator details, and storage consent requirements.
-- [ ] Verify production favicon behavior and all routes on the chosen host.
-- [ ] Keep custom domain optional; if used, test HTTPS, canonical URLs, and redirects.
+- Run and review the new GitHub Actions workflow result. A passing static check does not prove the 3D scene works in a browser.
+- Manually test the deployed site on desktop and mobile, including WebGL initialization, component selection, compatibility signals, power estimate, snapshots, JSON export, and CDN-independent loading.
+- Inspect the deployed browser console, network requests, cookies, storage, cache headers, and hosting-provider behavior. The hosting provider may still process IP addresses and technical request logs.
+- Test keyboard-only navigation, screen-reader semantics, zoom, contrast, reduced-motion behavior, and error states with assistive technology.
+- Review Three.js r128 for maintenance/security suitability. It is retained for API compatibility with the existing app; consider a separately tested upgrade rather than an untested version bump.
+- Review the privacy notice and terms with verified operator details, a dedicated contact route if needed, and jurisdiction-specific legal advice. Do not invent legal identity, postal address, governing law, or venue.
+- Confirm favicon and all legal routes on the deployed host. A custom domain remains optional.
+- Re-audit if accounts, waitlists, marketing email, payments, subscriptions, analytics, session replay, or uploads are added.
+- Decide separately whether the public repository and existing MIT license match the intended distribution model. Do not assume the current MIT grants can be revoked retroactively.
 
 Do not mark the project production-ready while material checks above remain unresolved.

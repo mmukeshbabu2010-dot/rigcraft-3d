@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0b0c10">
-  <meta name="description" content="How RigCraft 3D handles browser-stored build preferences and third-party resources.">
+  <meta name="description" content="How RigCraft 3D handles browser-stored build preferences and technical requests to the website host.">
   <meta name="referrer" content="no-referrer">
   <title>Privacy Policy | RigCraft 3D</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -27,11 +27,12 @@
       <p>The build workspace uses your browser's local storage to remember the selected region and currency display preference, build names, and saved build snapshots. This data is stored on your device by the browser and is not intentionally sent to a RigCraft application server by the current frontend code. Anyone with access to your browser profile may be able to access this data.</p>
       <p>You can remove this information by clearing site data in your browser settings. Clearing it may delete saved snapshots and preferences. Storage availability and retention depend on your browser and device.</p>
 
-      <h2>Third-party scripts and network information</h2>
-      <p>The 3D viewer currently loads the Three.js library from cdnjs.cloudflare.com and OrbitControls from cdn.jsdelivr.net. When your browser requests these files, the relevant content delivery provider and hosting/network intermediaries may receive technical request information such as your IP address, user agent, requested resource, and request time. Their own privacy policies and retention practices apply to their processing.</p>
-      <p>The current inspected application source does not intentionally include advertising pixels, analytics, or session-replay software. This statement is not a guarantee about the hosting provider, browser extensions, network intermediaries, or future changes. Re-check the deployed site's network requests when the application or hosting configuration changes.</p>
+      <h2>Website assets and network information</h2>
+<p>The 3D viewer uses locally hosted copies of Three.js r128 and OrbitControls r128 from this project's <code>vendor/</code> directory. Their upstream MIT license is included with the files. The current builder page does not request these JavaScript libraries from a third-party CDN.</p>
+<p>The website still depends on its hosting and network providers to deliver pages and assets. Those providers may process technical request information such as your IP address, user agent, requested resource, and request time. If you follow an external link, the destination provider may receive request information when that destination loads.</p>
+<p>The current inspected application source does not intentionally include advertising pixels, analytics, or session-replay software. This statement is not a guarantee about hosting infrastructure, browser extensions, network intermediaries, or future changes. Re-check deployed network requests when the application or hosting configuration changes.</p>
 
-      <h2>Cookies and similar storage</h2>
+<h2>Cookies and similar storage</h2>
       <p>The current workspace uses local storage for user-requested preferences and saved snapshots. The inspected application code does not intentionally set analytics cookies. Hosting infrastructure or third-party services may use their own technical storage or logs. Applicable consent requirements depend on the final configuration and the user's jurisdiction.</p>
 
       <h2>Accounts, marketing, and children</h2>
