@@ -1,30 +1,30 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0b0c10">
-  <meta name="description" content="RigCraft 3D is an independent interactive PC building and simulation project.">
-  <title>RigCraft 3D — Interactive PC Builder</title>
+  <meta name="description" content="Configure a PC in an interactive 3D builder. Explore components, review basic compatibility checks, and save a build snapshot locally.">
+  <meta name="referrer" content="no-referrer">
+  <title>RigCraft 3D: Interactive PC Builder</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <link rel="stylesheet" href="legal.css">
+  <script src="vendor/three-r128.min.js" referrerpolicy="no-referrer"></script>
+  <script src="vendor/OrbitControls-r128.js" referrerpolicy="no-referrer"></script>
 </head>
 <body>
+  <a class="skip-link" href="#hardware-configuration">Skip to hardware configuration</a>
   <main id="app-container">
     <section id="viewport" aria-label="Interactive 3D PC model">
       <div id="canvas-container"></div>
-      <div class="viewport-label">
-        <span class="live-dot"></span>
-        3D BUILD VIEW
-      </div>
+      <div class="viewport-label"><span class="live-dot" aria-hidden="true"></span>3D BUILD VIEW</div>
       <div class="camera-controls" aria-label="Camera controls">
         <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
         <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
         <button id="reset-camera" type="button">Reset view</button>
       </div>
-      <p class="viewport-hint">Drag to rotate · Scroll or pinch to zoom</p>
+      <p class="viewport-hint">Drag to rotate. Scroll or pinch to zoom.</p>
     </section>
 
     <aside id="ui-sidebar">
@@ -32,12 +32,24 @@
         <div class="brand-mark" aria-hidden="true">R</div>
         <div>
           <h1>RigCraft <span>3D</span></h1>
-          <p class="subtitle">Interactive PC Builder &amp; Simulator</p>
+          <p class="subtitle">Interactive PC Builder</p>
         </div>
       </header>
 
-      <section class="config-card">
-        <label for="dynamic-btn-group">Hardware configuration</label>
+      <section class="build-overview" aria-labelledby="build-overview-title">
+        <p class="eyebrow">INTERACTIVE PC CONFIGURATOR</p>
+        <h2 id="build-overview-title">Configure a PC and check its build signals.</h2>
+        <p class="overview-copy">Choose hardware, adjust the lighting, and review the compatibility checks currently supported by this prototype.</p>
+        <button id="start-building" class="primary-action" type="button">Choose a component <span aria-hidden="true">→</span></button>
+        <nav class="quick-links" aria-label="Builder sections">
+          <a href="#hardware-configuration">Components</a>
+          <a href="#system-lighting">Lighting</a>
+          <a href="#spec-summary">Build summary</a>
+        </nav>
+      </section>
+
+      <section id="hardware-configuration" class="config-card" aria-labelledby="hardware-heading" tabindex="-1">
+        <div class="section-heading"><h2 id="hardware-heading">Hardware configuration</h2><span class="small-tag">01 / PARTS</span></div>
         <nav class="tab-menu" aria-label="Hardware categories">
           <button class="tab-btn active" data-category="cases" type="button">Case</button>
           <button class="tab-btn" data-category="motherboards" type="button">Board</button>
@@ -49,10 +61,11 @@
         <div id="dynamic-btn-group" class="hardware-options" aria-live="polite"></div>
       </section>
 
-      <section class="config-card">
-        <label for="rgb-color">System lighting</label>
+      <section id="system-lighting" class="config-card" aria-labelledby="lighting-heading">
+        <h2 id="lighting-heading">System lighting</h2>
         <div class="rgb-row">
-          <input id="rgb-color" type="color" value="#66fcf1" aria-label="Choose RGB color">
+          <label class="visually-hidden" for="rgb-color">Choose RGB color</label>
+          <input id="rgb-color" type="color" value="#66fcf1">
           <span id="rgb-color-label">Arctic cyan</span>
         </div>
         <div class="button-row">
@@ -61,50 +74,54 @@
         </div>
       </section>
 
-      <section class="config-card">
-        <label>Chassis controls</label>
+      <section id="chassis-controls" class="config-card" aria-labelledby="chassis-heading">
+        <h2 id="chassis-heading">Chassis controls</h2>
         <div class="button-row">
           <button id="btn-panel" type="button" aria-pressed="false">Remove glass</button>
           <button id="btn-fans" type="button" aria-pressed="true">Fans: On</button>
         </div>
       </section>
 
-      <section id="spec-summary" class="config-card">
-        <div class="section-heading">
-          <h2>Live system specs</h2>
-          <span class="small-tag">LIVE</span>
-        </div>
+      <section id="spec-summary" class="config-card" aria-labelledby="spec-heading">
+        <div class="section-heading"><h2 id="spec-heading">Live system specs</h2><span class="small-tag">LIVE</span></div>
         <ul>
           <li id="selected-case"><strong>Case:</strong> Loading…</li>
           <li id="selected-motherboard"><strong>Motherboard:</strong> Loading…</li>
           <li id="selected-cpu"><strong>CPU:</strong> Loading…</li>
           <li id="selected-gpu"><strong>GPU:</strong> Loading…</li>
           <li id="selected-psu"><strong>PSU:</strong> Loading…</li>
-          <li id="estimated-power"><strong>Estimated power:</strong> —</li>
+          <li id="estimated-power"><strong>Estimated power:</strong> Not calculated</li>
         </ul>
-        <div id="compat-status" role="status" aria-live="polite">
-          <strong>Compatibility:</strong> Checking…
-        </div>
+        <div id="compat-status" role="status" aria-live="polite"><strong>Compatibility:</strong> Checking…</div>
         <ul id="compat-issues" class="compat-issues" aria-live="polite"></ul>
         <p class="fine-print">Power figures are estimates, not measured consumption. A PASS only covers the checks implemented here.</p>
       </section>
 
       <section id="disclaimer" aria-labelledby="disclaimer-heading">
-        <h2 id="disclaimer-heading">Independent Project &amp; Trademark Disclaimer</h2>
-        <p>RigCraft 3D is an independent, fan-made PC building and simulation project. It is not affiliated with, endorsed by, sponsored by, or officially connected to Corsair, NVIDIA, AMD, Intel, or any other hardware manufacturer mentioned on this website.</p>
-        <p>All company names, product names, logos, and trademarks belong to their respective owners and are used only to identify or describe the relevant products. Their appearance does not imply any partnership or endorsement.</p>
-        <p>3D models and visual representations are simulations for informational and demonstration purposes. Actual product designs, dimensions, labels, lighting, and specifications may differ. Always verify product information with the manufacturer before making a purchase.</p>
+        <h2 id="disclaimer-heading">Independent project and trademark notice</h2>
+        <p>RigCraft 3D is an independent PC-building project. It is not affiliated with, endorsed by, sponsored by, or officially connected to Corsair, NVIDIA, AMD, Intel, or any other hardware manufacturer mentioned on this website.</p>
+        <p>Company names, product names, logos, and trademarks belong to their respective owners and are used to identify or describe relevant products. Their appearance does not imply a partnership or endorsement.</p>
+        <p>3D models and visual representations are simulations for informational and demonstration purposes. Actual product designs, dimensions, labels, lighting, and specifications may differ. Verify product information with the manufacturer before making a purchase.</p>
       </section>
 
       <footer class="site-footer">
-        © <span id="copyright-year"></span> RigCraft 3D. Independent project.
+        <p>© <span id="copyright-year"></span> RigCraft 3D. Independent project.</p>
+        <nav aria-label="Legal and project links">
+          <a href="privacy.html">Privacy Policy</a>
+          <a href="terms.html">Terms and Conditions</a>
+          <a href="https://github.com/mmukeshbabu2010-dot/rigcraft-3d/issues" rel="noopener noreferrer" target="_blank">Contact / report an issue</a>
+        </nav>
       </footer>
     </aside>
   </main>
 
   <script>
-    document.getElementById("copyright-year").textContent =
-      String(new Date().getFullYear());
+    document.getElementById("start-building").addEventListener("click", () => {
+      const target = document.getElementById("hardware-configuration");
+      target.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+      target.querySelector(".tab-btn")?.focus({ preventScroll: true });
+    });
+    document.getElementById("copyright-year").textContent = String(new Date().getFullYear());
   </script>
   <script src="app.js"></script>
   <script src="js/workspace.js"></script>

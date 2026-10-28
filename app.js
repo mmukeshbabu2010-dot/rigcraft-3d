@@ -858,6 +858,13 @@ function renderOptions(category) {
     meta.textContent = optionMeta(category, item);
     button.appendChild(meta);
 
+    const preview = previewCompatibility(category, item);
+    const compatibility = document.createElement("span");
+    compatibility.className = `option-status option-status-${preview.status.toLowerCase()}`;
+    compatibility.textContent = `Build check: ${preview.status}`;
+    button.title = preview.issues.join(" ") || "No issues found by the current compatibility checks.";
+    button.appendChild(compatibility);
+
     button.addEventListener("click", () => {
       selected[category] = item;
 
@@ -928,20 +935,17 @@ function compatibilityCheck() {
     }
   }
 
-  const formFactor = String(m.form_factor || "").toUpperCase();
+  const formFactor = String(m.form_factor || "").trim().toUpperCase();
+  const supportedFormFactors = Array.isArray(c.supported_form_factors)
+    ? c.supported_form_factors.map((value) => String(value).trim().toUpperCase()).filter(Boolean)
+    : [];
 
-  if (formFactor === "ATX" && c.id === "compact-itx") {
-    issues.push("An ATX motherboard may not fit this Mini-ITX case.");
-  }
-
-  if (formFactor === "MICRO-ATX" && c.id === "compact-itx") {
-    issues.push("A Micro-ATX motherboard may not fit this Mini-ITX case.");
-  }
-
-  if (formFactor === "MINI-ITX" && c.id === "corsair-5000d") {
-    unknown.push(
-      "Motherboard fits are not fully modeled; verify mounting compatibility."
-    );
+  if (!formFactor) {
+    unknown.push("Motherboard form-factor information is missing.");
+  } else if (!supportedFormFactors.length) {
+    unknown.push("Case motherboard form-factor support is not recorded; verify fit.");
+  } else if (!supportedFormFactors.includes(formFactor)) {
+    issues.push(`${m.form_factor} motherboard is not listed as supported by ${c.name}.`);
   }
 
   let status = "PASS";
@@ -953,6 +957,16 @@ function compatibilityCheck() {
     issues: [...issues, ...unknown],
     estimatedPower
   };
+}
+
+function previewCompatibility(category, item) {
+  const previous = selected[category];
+  selected[category] = item;
+  try {
+    return compatibilityCheck();
+  } finally {
+    selected[category] = previous;
+  }
 }
 
 function updateSpecsAndCompatibility() {
@@ -1014,9 +1028,69 @@ function validateParts(data) {
       }
 
       ids.add(item.id);
+
+      if (category === "cases") {
+        if (!Array.isArray(item.supported_form_factors) || !item.supported_form_factors.length ||
+            item.supported_form_factors.some((value) => typeof value !== "string" || !value.trim())) {
+          throw new Error(`Invalid motherboard form-factor support in case ${item.id}.`);
+        }
+      }
     }
   }
 }
+
+/* Build workspace integration */
+
+function getSelectedPartIds() {
+  if (!hardwareLoaded) return null;
+  return Object.fromEntries(
+    Object.keys(categoryInfo).map((category) => [category, selected[category]?.id || null])
+  );
+}
+
+function restoreBuildSnapshot(snapshot) {
+  if (!hardwareLoaded || !snapshot || typeof snapshot !== "object") return false;
+
+  const specIds = {
+    cases: "selected-case",
+    motherboards: "selected-motherboard",
+    cpus: "selected-cpu",
+    gpus: "selected-gpu",
+    psus: "selected-psu"
+  };
+  const restored = {};
+
+  for (const category of Object.keys(categoryInfo)) {
+    const savedId = snapshot.selectionIds?.[category];
+    let part = savedId
+      ? partsData[category].find((item) => item.id === savedId)
+      : null;
+
+    // Older schema-v1 snapshots stored visible names only. Restore them when every
+    // saved name maps unambiguously to an item in the current catalogue.
+    if (!part) {
+      const visibleSpec = snapshot.visibleSpecs?.[specIds[category]];
+      if (typeof visibleSpec === "string") {
+        const separator = visibleSpec.indexOf(":");
+        const savedName = (separator >= 0 ? visibleSpec.slice(separator + 1) : visibleSpec).trim();
+        const matches = partsData[category].filter((item) => item.name === savedName);
+        if (matches.length === 1) part = matches[0];
+      }
+    }
+
+    if (!part) return false;
+    restored[category] = part;
+  }
+
+  Object.assign(selected, restored);
+  rebuildScene();
+  const activeCategory = document.querySelector("[data-category].active")?.dataset.category || "cases";
+  renderOptions(activeCategory);
+  updateSpecsAndCompatibility();
+  return true;
+}
+
+window.RigCraft3D = Object.freeze({ getSelectedPartIds, restoreBuildSnapshot });
 
 /* Initialization */
 

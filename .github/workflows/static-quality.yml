@@ -1,0 +1,34 @@
+name: Static quality checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate static site
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - name: Check JavaScript syntax
+        run: |
+          node --check app.js
+          node --check js/workspace.js
+          node --check scripts/validate-site.mjs
+          node --check scripts/test-compatibility.mjs
+          node --check scripts/test-build-restore.mjs
+      - name: Validate pages, local assets, and parts catalogue
+        run: |
+          node scripts/validate-site.mjs
+          node scripts/test-compatibility.mjs
+          node scripts/test-build-restore.mjs

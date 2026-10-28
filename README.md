@@ -1,72 +1,66 @@
-<div align="center">
+# RigCraft 3D
 
-  # 🖥️ RigCraft 3D
+RigCraft 3D is a browser-based PC configurator with an interactive Three.js view, an illustrative component catalogue, basic compatibility signals, and local build snapshots.
 
-  ### *An interactive 3D PC builder, compatibility engine & virtual OS simulator right in your browser.*
+**Live site:** https://mmukeshbabu2010-dot.github.io/rigcraft-3d/
 
-  [![Open Source Love](https://img.shields.io/badge/Open%20Source-%E2%9D%A4-ff69b4?style=for-the-badge&logo=open-source-initiative&logoColor=white)](https://opensource.org)
-  [![100% Independent](https://img.shields.io/badge/Affiliation-100%25%20Independent-7B2CBF?style=for-the-badge)](https://github.com/mmukeshbabu2010-dot/rigcraft-3d)
-  [![License](https://img.shields.io/badge/License-MIT-00F5D4?style=for-the-badge&logo=mit&logoColor=black)](LICENSE)
+## Current capabilities
 
-  <br />
+- Rotate and inspect a procedural 3D PC assembly.
+- Choose sample cases, motherboards, CPUs, GPUs, and power supplies.
+- View build-check status on each component option, based on the currently selected parts, alongside compatibility messages for CPU/motherboard sockets, case GPU clearance, listed motherboard/case form factors, and estimated power.
+- Set a region preference, with India as the first-visit default.
+- Save up to 20 build snapshots in browser local storage, restore a saved component selection, delete saved snapshots, and export a snapshot as JSON.
+- Read the Privacy Policy and Terms and Conditions from the site footer.
 
-  [![Stars](https://img.shields.io/github/stars/mmukeshbabu2010-dot/rigcraft-3d?style=flat-square&color=FFD166&logo=github)](https://github.com/mmukeshbabu2010-dot/rigcraft-3d/stargazers)
-  [![Forks](https://img.shields.io/github/forks/mmukeshbabu2010-dot/rigcraft-3d?style=flat-square&color=06D6A0&logo=github)](https://github.com/mmukeshbabu2010-dot/rigcraft-3d/network/members)
-  [![Issues](https://img.shields.io/github/issues/mmukeshbabu2010-dot/rigcraft-3d?style=flat-square&color=EF476F&logo=github)](https://github.com/mmukeshbabu2010-dot/rigcraft-3d/issues)
-  [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-118AB2?style=flat-square&logo=git&logoColor=white)](https://github.com/mmukeshbabu2010-dot/rigcraft-3d/pulls)
+## Current limitations
 
-</div>
+- The 3D geometry is illustrative, not manufacturer CAD or a guarantee of physical fit.
+- The included parts catalogue is small sample data. Compatibility checks are incomplete, and case fit metadata is illustrative. Always confirm clearances and supported form factors against manufacturer specifications.
+- There is no live retailer pricing, stock feed, or currency conversion.
+- Snapshots store selected catalogue part IDs plus displayed specifications. Older snapshots can be restored when their saved part names still match the current catalogue. Snapshots do not include pricing.
+- There are no accounts, cloud sync, or cloud backup.
+- Virtual operating-system simulations and synthetic benchmark results are not implemented and are not advertised as working features.
 
----
+## Run locally
 
-## 💡 About RigCraft 3D
+Use a local HTTP server so the page and scripts load consistently. From the repository root, run:
 
-> 📢 **Disclaimer**: **RigCraft 3D** is an independent, community-driven **Open Source project**. It is created, maintained, and operated purely by individual contributors. **It is not affiliated, associated, authorized, endorsed by, or in any way officially connected with any hardware vendor, component manufacturer, operating system publisher, or commercial enterprise.** All product names, logos, and brands mentioned or depicted in 3D views are property of their respective owners.
+```sh
+python3 -m http.server 8000
+```
 
-**RigCraft 3D** is an interactive web application designed to make PC building accessible, visual, and educational. Built to run smoothly in web browsers on both PC and mobile devices, it allows users to inspect hardware in 360°, check real-time part compatibility, calculate wattage, and simulate virtual OS performance.
+Then open http://localhost:8000/ in a browser with WebGL support enabled.
 
----
+## Validation
 
-### 🎨 Built With
+The project includes dependency-free static checks and a GitHub Actions workflow. With Node.js 20 or later installed, run:
 
-![Three.js](https://img.shields.io/badge/Three.js-000000?style=for-the-badge&logo=three.js&logoColor=white)
-![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
-![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
-![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
-![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+```sh
+node --check app.js
+node --check js/workspace.js
+node --check scripts/validate-site.mjs
+node --check scripts/test-compatibility.mjs
+node --check scripts/test-build-restore.mjs
+node scripts/validate-site.mjs
+node scripts/test-compatibility.mjs
+node scripts/test-build-restore.mjs
+```
 
----
+The checks cover local HTML links and assets, duplicate IDs, in-page anchors, script syntax, remote font/script references, the shape of the parts catalogue, the saved-build restore controls/API, and case/board fit metadata. Focused behavior tests exercise unsupported form-factor and CPU socket mismatches, candidate compatibility previews, and build restoration by ID and legacy name with atomic failure behavior. They do not replace manual browser, accessibility, legal, or security review.
 
-## ✨ Core Features
+## Third-party code
 
-* 🎮 **3D Interactive Inspector:** Rotate, zoom, and explore PC cases, side panels, and internal components in 3D.
-* ⚡ **Live Compatibility Engine:** Checks socket types (LGA / AM5), PCIe generations, RAM profiles (DDR4 / DDR5), and physical clearance (GPU length, CPU cooler height).
-* 🔋 **Wattage & Power Calculator:** Estimates real-time power draw and verifies PSU safety headroom.
-* 🖥️ **Virtual OS & Benchmark Testing:** Simulates virtual BIOS setups, synthetic benchmark scores (FPS, CPU/GPU temperatures), and OS boot environments.
-* 📱 **Responsive Design:** Optimized for mouse/keyboard on PC and touch controls on mobile devices.
+The project uses Three.js r128 and its matching OrbitControls script. Both are stored under `vendor/` and retain the upstream MIT license in `vendor/THREE-LICENSE.txt`. See `vendor/README.md` for source references and file checksums.
 
----
+## Privacy and legal information
 
-## 🤝 Contributing
+See [Privacy Policy](privacy.html) and [Terms and Conditions](terms.html). The current workspace stores preferences and snapshots in browser local storage. The hosting provider may process technical request logs. The policy and terms need operator-specific and jurisdiction-specific review before commercial production use.
 
-Contributions are what make the Open Source community an incredible place to learn, inspire, and create! Any contributions—whether adding new hardware data, improving 3D models, or tweaking UI—are **greatly appreciated**.
+## Contributing
 
-1. **Fork** the Repository (`mmukeshbabu2010-dot/rigcraft-3d`)
-2. Create your Feature Branch (`git checkout -b feature/CoolNewFeature`)
-3. **Commit** your Changes (`git commit -m 'Add CoolNewFeature'`)
-## 📜 License
+Open a pull request with a focused change. Describe the behavior changed, test evidence, accessibility implications, third-party requests, and any changes to data collection or storage. Keep `main` unchanged until the change has been reviewed and approved.
 
-Distributed under the **MIT License**. See `LICENSE` for more information.
+## License
 
----
-
-<div align="center">
-
-Made with ❤️ by the **Open Source Community**
-
-</div>
-
-
-## Build workspace
-
-The workspace includes a region preference (India by default) and local build snapshots with JSON export. Snapshots capture visible specification text; they do not restore builds or include live pricing. Region selection currently stores a preference only and does not convert currency or query retailers.
+The project is distributed under the MIT License in `LICENSE`, subject to separate notices and rights for third-party components and trademarks. The repository is currently public; this commit does not change repository visibility or licensing.
