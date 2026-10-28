@@ -10,7 +10,7 @@ RigCraft 3D is a browser-based PC configurator with an interactive Three.js view
 - Choose sample cases, motherboards, CPUs, GPUs, and power supplies.
 - View basic compatibility messages and an estimated power requirement based on the sample data.
 - Set a region preference, with India as the first-visit default.
-- Save up to 20 build snapshots in browser local storage and export a snapshot as JSON.
+- Save up to 20 build snapshots in browser local storage, restore a saved component selection, delete saved snapshots, and export a snapshot as JSON.
 - Read the Privacy Policy and Terms and Conditions from the site footer.
 
 ## Current limitations
@@ -18,7 +18,7 @@ RigCraft 3D is a browser-based PC configurator with an interactive Three.js view
 - The 3D geometry is illustrative, not manufacturer CAD or a guarantee of physical fit.
 - The included parts catalogue is small sample data. Compatibility checks are incomplete and must not replace manufacturer specifications.
 - There is no live retailer pricing, stock feed, or currency conversion.
-- Snapshots capture displayed specification text. They do not restore a selected build and do not include pricing.
+- Snapshots store selected catalogue part IDs plus displayed specifications. Older snapshots can be restored when their saved part names still match the current catalogue. Snapshots do not include pricing.
 - There are no accounts, cloud sync, or cloud backup.
 - Virtual operating-system simulations and synthetic benchmark results are not implemented and are not advertised as working features.
 
@@ -43,7 +43,7 @@ node --check scripts/validate-site.mjs
 node scripts/validate-site.mjs
 ```
 
-The checks cover local HTML links and assets, duplicate IDs, in-page anchors, script syntax, remote font/script references, and the shape of the parts catalogue. They do not replace manual browser, accessibility, legal, or security review.
+The checks cover local HTML links and assets, duplicate IDs, in-page anchors, script syntax, remote font/script references, the shape of the parts catalogue, and the saved-build restore controls/API. They do not replace manual browser, accessibility, legal, or security review.
 
 ## Third-party code
 

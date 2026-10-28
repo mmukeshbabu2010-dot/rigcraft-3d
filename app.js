@@ -1018,6 +1018,59 @@ function validateParts(data) {
   }
 }
 
+/* Build workspace integration */
+
+function getSelectedPartIds() {
+  if (!hardwareLoaded) return null;
+  return Object.fromEntries(
+    Object.keys(categoryInfo).map((category) => [category, selected[category]?.id || null])
+  );
+}
+
+function restoreBuildSnapshot(snapshot) {
+  if (!hardwareLoaded || !snapshot || typeof snapshot !== "object") return false;
+
+  const specIds = {
+    cases: "selected-case",
+    motherboards: "selected-motherboard",
+    cpus: "selected-cpu",
+    gpus: "selected-gpu",
+    psus: "selected-psu"
+  };
+  const restored = {};
+
+  for (const category of Object.keys(categoryInfo)) {
+    const savedId = snapshot.selectionIds?.[category];
+    let part = savedId
+      ? partsData[category].find((item) => item.id === savedId)
+      : null;
+
+    // Older schema-v1 snapshots stored visible names only. Restore them when every
+    // saved name maps unambiguously to an item in the current catalogue.
+    if (!part) {
+      const visibleSpec = snapshot.visibleSpecs?.[specIds[category]];
+      if (typeof visibleSpec === "string") {
+        const separator = visibleSpec.indexOf(":");
+        const savedName = (separator >= 0 ? visibleSpec.slice(separator + 1) : visibleSpec).trim();
+        const matches = partsData[category].filter((item) => item.name === savedName);
+        if (matches.length === 1) part = matches[0];
+      }
+    }
+
+    if (!part) return false;
+    restored[category] = part;
+  }
+
+  Object.assign(selected, restored);
+  rebuildScene();
+  const activeCategory = document.querySelector("[data-category].active")?.dataset.category || "cases";
+  renderOptions(activeCategory);
+  updateSpecsAndCompatibility();
+  return true;
+}
+
+window.RigCraft3D = Object.freeze({ getSelectedPartIds, restoreBuildSnapshot });
+
 /* Initialization */
 
 async function initialize() {

@@ -57,6 +57,16 @@ for (const file of ["style.css", "legal.css"]) {
   assert.doesNotMatch(css, /@import\s+(?:url\()?\s*["']?https?:/i, `${file}: remote CSS import found`);
 }
 
+const appSource = read("app.js");
+const workspaceSource = read("js/workspace.js");
+assert.match(appSource, /getSelectedPartIds/ , "Builder must expose selected part IDs for snapshots");
+assert.match(appSource, /restoreBuildSnapshot/ , "Builder must expose a restore API");
+assert.match(appSource, /Object\.assign\(selected, restored\)/, "Restoring a build must apply all selected parts");
+assert.match(workspaceSource, /schemaVersion:2/, "New snapshots must use schema version 2");
+assert.match(workspaceSource, /selectionIds:window\.RigCraft3D\?\.getSelectedPartIds\(\)/, "Snapshots must save stable part IDs");
+assert.match(workspaceSource, /textContent="Restore"/, "Saved snapshots must expose a restore action");
+assert.match(workspaceSource, /textContent="Delete"/, "Saved snapshots must expose a delete action");
+
 const parts = JSON.parse(read("parts.json"));
 const requirements = {
   cases: ["id", "name", "max_gpu_length_mm", "max_cooler_height_mm"],

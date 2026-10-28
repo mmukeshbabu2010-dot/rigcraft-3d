@@ -562,3 +562,8 @@ button.primary-action span { font-size: 1.1rem; }
 @media (prefers-reduced-motion: reduce) {
   html:focus-within { scroll-behavior: auto; }
 }
+
+
+/* Saved-build actions remain grouped and wrap on narrow screens. */
+.workspace-item-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.workspace-item-actions button { flex: 0 0 auto; }
