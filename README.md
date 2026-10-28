@@ -54,12 +54,6 @@ Contributions are what make the Open Source community an incredible place to lea
 1. **Fork** the Repository (`mmukeshbabu2010-dot/rigcraft-3d`)
 2. Create your Feature Branch (`git checkout -b feature/CoolNewFeature`)
 3. **Commit** your Changes (`git commit -m 'Add CoolNewFeature'`)
-4.My bad! Here is the tailored, colorful, and feature-rich `README.md` specifically customized for **RigCraft 3D** (matching your repository `mmukeshbabu2010-dot/rigcraft-3d`).
-
----
-
-
-
 ## 📜 License
 
 Distributed under the **MIT License**. See `LICENSE` for more information.
@@ -71,3 +65,8 @@ Distributed under the **MIT License**. See `LICENSE` for more information.
 Made with ❤️ by the **Open Source Community**
 
 </div>
+
+
+## Build workspace
+
+The workspace includes a region preference (India by default) and local build snapshots with JSON export. Snapshots capture visible specification text; they do not restore builds or include live pricing. Region selection currently stores a preference only and does not convert currency or query retailers.
