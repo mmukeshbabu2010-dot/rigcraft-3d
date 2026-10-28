@@ -858,6 +858,13 @@ function renderOptions(category) {
     meta.textContent = optionMeta(category, item);
     button.appendChild(meta);
 
+    const preview = previewCompatibility(category, item);
+    const compatibility = document.createElement("span");
+    compatibility.className = `option-status option-status-${preview.status.toLowerCase()}`;
+    compatibility.textContent = `Build check: ${preview.status}`;
+    button.title = preview.issues.join(" ") || "No issues found by the current compatibility checks.";
+    button.appendChild(compatibility);
+
     button.addEventListener("click", () => {
       selected[category] = item;
 
@@ -950,6 +957,16 @@ function compatibilityCheck() {
     issues: [...issues, ...unknown],
     estimatedPower
   };
+}
+
+function previewCompatibility(category, item) {
+  const previous = selected[category];
+  selected[category] = item;
+  try {
+    return compatibilityCheck();
+  } finally {
+    selected[category] = previous;
+  }
 }
 
 function updateSpecsAndCompatibility() {

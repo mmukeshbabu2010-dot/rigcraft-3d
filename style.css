@@ -567,3 +567,14 @@ button.primary-action span { font-size: 1.1rem; }
 /* Saved-build actions remain grouped and wrap on narrow screens. */
 .workspace-item-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .workspace-item-actions button { flex: 0 0 auto; }
+
+
+.option-status { display: block; margin-top: 6px; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.01em; }
+.option-status-pass { color: #176b4a; }
+.option-status-fail { color: #a12828; }
+.option-status-check,
+.option-status-incomplete { color: #805d12; }
+.hardware-options button:not(.active) .option-status-pass { color: #77d7ad; }
+.hardware-options button:not(.active) .option-status-fail { color: #ff9a9a; }
+.hardware-options button:not(.active) .option-status-check,
+.hardware-options button:not(.active) .option-status-incomplete { color: #efd18a; }

@@ -61,6 +61,8 @@ const appSource = read("app.js");
 const workspaceSource = read("js/workspace.js");
 assert.match(appSource, /getSelectedPartIds/ , "Builder must expose selected part IDs for snapshots");
 assert.match(appSource, /restoreBuildSnapshot/ , "Builder must expose a restore API");
+assert.match(appSource, /previewCompatibility/ , "Component options must preview compatibility");
+assert.match(appSource, /Build check: \$\{preview\.status\}/, "Component options must show compatibility status");
 assert.match(appSource, /Object\.assign\(selected, restored\)/, "Restoring a build must apply all selected parts");
 assert.match(workspaceSource, /schemaVersion:2/, "New snapshots must use schema version 2");
 assert.match(workspaceSource, /selectionIds:window\.RigCraft3D\?\.getSelectedPartIds\(\)/, "Snapshots must save stable part IDs");
