@@ -41,11 +41,13 @@ node --check app.js
 node --check js/workspace.js
 node --check scripts/validate-site.mjs
 node --check scripts/test-compatibility.mjs
+node --check scripts/test-build-restore.mjs
 node scripts/validate-site.mjs
 node scripts/test-compatibility.mjs
+node scripts/test-build-restore.mjs
 ```
 
-The checks cover local HTML links and assets, duplicate IDs, in-page anchors, script syntax, remote font/script references, the shape of the parts catalogue, the saved-build restore controls/API, and case/board fit metadata. A focused behavior test exercises unsupported form-factor and CPU socket mismatches. They do not replace manual browser, accessibility, legal, or security review.
+The checks cover local HTML links and assets, duplicate IDs, in-page anchors, script syntax, remote font/script references, the shape of the parts catalogue, the saved-build restore controls/API, and case/board fit metadata. Focused behavior tests exercise unsupported form-factor and CPU socket mismatches, plus build restoration by ID and legacy name with atomic failure behavior. They do not replace manual browser, accessibility, legal, or security review.
 
 ## Third-party code
 
