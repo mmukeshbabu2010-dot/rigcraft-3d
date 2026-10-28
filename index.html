@@ -12,6 +12,7 @@
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
+  <a class="skip-link" href="#hardware-configuration">Skip to hardware configuration</a>
   <main id="app-container">
     <section id="viewport" aria-label="Interactive 3D PC model">
       <div id="canvas-container"></div>
@@ -36,8 +37,20 @@
         </div>
       </header>
 
-      <section class="config-card">
-        <label for="dynamic-btn-group">Hardware configuration</label>
+      <section class="build-overview" aria-labelledby="build-overview-title">
+        <p class="eyebrow">YOUR NEXT BUILD STARTS HERE</p>
+        <h2 id="build-overview-title">Design your dream rig.</h2>
+        <p class="overview-copy">Explore the hardware, tune the lighting, and check the compatibility signals as you build.</p>
+        <button id="start-building" class="primary-action" type="button">Choose your first component <span aria-hidden="true">→</span></button>
+        <nav class="quick-links" aria-label="Builder sections">
+          <a href="#hardware-configuration">Components</a>
+          <a href="#system-lighting">Lighting</a>
+          <a href="#spec-summary">Build health</a>
+        </nav>
+      </section>
+
+      <section id="hardware-configuration" class="config-card" aria-labelledby="hardware-heading">
+        <div class="section-heading"><h2 id="hardware-heading">Hardware configuration</h2><span class="small-tag">01 / PARTS</span></div>
         <nav class="tab-menu" aria-label="Hardware categories">
           <button class="tab-btn active" data-category="cases" type="button">Case</button>
           <button class="tab-btn" data-category="motherboards" type="button">Board</button>
@@ -49,7 +62,7 @@
         <div id="dynamic-btn-group" class="hardware-options" aria-live="polite"></div>
       </section>
 
-      <section class="config-card">
+      <section id="system-lighting" class="config-card">
         <label for="rgb-color">System lighting</label>
         <div class="rgb-row">
           <input id="rgb-color" type="color" value="#66fcf1" aria-label="Choose RGB color">
@@ -61,7 +74,7 @@
         </div>
       </section>
 
-      <section class="config-card">
+      <section id="chassis-controls" class="config-card">
         <label>Chassis controls</label>
         <div class="button-row">
           <button id="btn-panel" type="button" aria-pressed="false">Remove glass</button>
@@ -103,6 +116,10 @@
   </main>
 
   <script>
+    document.getElementById("start-building").addEventListener("click", () => {
+      document.getElementById("hardware-configuration").scrollIntoView({ behavior: "smooth", block: "start" });
+      document.querySelector(".tab-btn")?.focus({ preventScroll: true });
+    });
     document.getElementById("copyright-year").textContent =
       String(new Date().getFullYear());
   </script>
