@@ -504,3 +504,7 @@ input:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* Build workspace additions */
+.workspace-actions{display:grid;gap:10px;margin-top:12px}.workspace-actions label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:5px}.workspace-actions select,.workspace-actions input,.workspace-actions button{width:100%;padding:10px;border:1px solid #35434e;border-radius:8px;background:var(--panel);color:var(--text);font:inherit}.workspace-actions button{cursor:pointer;background:#123a3a;border-color:var(--accent)}.workspace-actions button:hover{filter:brightness(1.15)}.workspace-note{font-size:.78rem;color:var(--muted);line-height:1.5}.workspace-list{padding-left:18px;font-size:.85rem}.workspace-item{margin:8px 0;overflow-wrap:anywhere}
