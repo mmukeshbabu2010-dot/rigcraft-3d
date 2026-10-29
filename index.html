@@ -9,6 +9,7 @@
   <title>RigCraft 3D: Interactive PC Builder</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="selection-tools.css">
   <link rel="stylesheet" href="legal.css">
   <script src="vendor/three-r128.min.js" referrerpolicy="no-referrer"></script>
   <script src="vendor/OrbitControls-r128.js" referrerpolicy="no-referrer"></script>
@@ -24,7 +25,7 @@
         <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
         <button id="reset-camera" type="button">Reset view</button>
       </div>
-      <p class="viewport-hint">Drag to rotate. Scroll or pinch to zoom.</p>
+      <p class="viewport-hint">Drag to rotate. Scroll or pinch to zool.</p>
     </section>
 
     <aside id="ui-sidebar">
@@ -71,7 +72,17 @@
           <button class="tab-btn" data-category="psus" type="button">PSU</button>
         </nav>
         <p id="category-label">Select Case</p>
+        <div class="selection-tools" aria-label="Find and filter components">
+          <label for="part-search">Search components</label>
+          <input id="part-search" type="search" placeholder="Search by name or specification" autocomplete="off" aria-controls="dynamic-btn-group">
+          <label class="filter-check" for="hide-incompatible-options">
+            <input id="hide-incompatible-options" type="checkbox" aria-controls="dynamic-btn-group">
+            Hide options marked FAIL
+          </label>
+          <p id="part-results-count" class="selection-results" aria-live="polite">Loading components…</p>
+        </div>
         <div id="dynamic-btn-group" class="hardware-options" aria-live="polite"></div>
+        <p id="part-empty-state" class="selection-empty" hidden>No matching components. Try a shorter search or turn off the FAIL filter.</p>
       </section>
 
       <section id="system-lighting" class="config-card" aria-labelledby="lighting-heading">
@@ -138,5 +149,6 @@
   </script>
   <script src="app.js"></script>
   <script src="js/workspace.js"></script>
+  <script src="js/selection-tools.js"></script>
 </body>
 </html>
