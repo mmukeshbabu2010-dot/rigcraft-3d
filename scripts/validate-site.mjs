@@ -63,6 +63,10 @@ assert.match(appSource, /getSelectedPartIds/ , "Builder must expose selected par
 assert.match(appSource, /restoreBuildSnapshot/ , "Builder must expose a restore API");
 assert.match(appSource, /previewCompatibility/ , "Component options must preview compatibility");
 assert.match(appSource, /Build check: \$\{preview\.status\}/, "Component options must show compatibility status");
+assert.match(appSource, /const lightRing = new THREE\.Mesh/, "Fans must have a separate configurable accent ring");
+assert.match(appSource, /PSU fan grille on the side facing the glass panel/, "PSU model must include visible fan grille detail");
+assert.match(appSource, /PCIe connector with individual gold contacts/, "GPU model must include connector contact detail");
+assert.match(appSource, /Socket latch and retention arm/, "Motherboard model must include CPU socket retention detail");
 assert.match(appSource, /Object\.assign\(selected, restored\)/, "Restoring a build must apply all selected parts");
 assert.match(workspaceSource, /schemaVersion:2/, "New snapshots must use schema version 2");
 assert.match(workspaceSource, /selectionIds:window\.RigCraft3D\?\.getSelectedPartIds\(\)/, "Snapshots must save stable part IDs");
