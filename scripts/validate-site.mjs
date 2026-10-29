@@ -70,6 +70,11 @@ assert.match(appSource, /PSU fan grille on the side facing the glass panel/, "PS
 assert.match(appSource, /PCIe connector with individual gold contacts/, "GPU model must include connector contact detail");
 assert.match(appSource, /Socket latch and retention arm/, "Motherboard model must include CPU socket retention detail");
 assert.match(appSource, /function buildGPUProcedural\(\)/, "GPU must retain a procedural fallback if the GLB cannot load");
+assert.match(appSource, /const fanCount = isCompact \|\| isAmdMidrange \? 2 : 3/, "GPU families must use different cooler layouts");
+assert.match(appSource, /card\.scale\.z = lengthScale/, "GPU length must follow the selected catalogue part");
+assert.match(appSource, /selected\.gpus\?\.id !== "rtx4090"/, "The single reference GLB must not be reused for every GPU SKU");
+assert.match(appSource, /Front intake pattern/, "Case variants must have differentiated front-panel ventilation");
+assert.match(appSource, /const caseId = selected\.cases\?\.id/, "Case visuals must respond to the selected case");
 assert.match(appSource, /new THREE\.GLTFLoader\(\)/, "GPU must load its detailed GLB mesh");
 assert.match(appSource, /setMeshoptDecoder/, "Compressed GLB decoding must be configured");
 assert.ok(fs.existsSync(path.join(root, "assets/models/gpu.glb")), "GPU GLB asset is missing");
