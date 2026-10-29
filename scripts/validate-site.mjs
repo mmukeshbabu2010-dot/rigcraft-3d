@@ -47,6 +47,8 @@ for (const file of htmlFiles) {
 const index = read("index.html");
 assert.match(index, /vendor\/three-r128\.min\.js/, "Three.js must be self-hosted at the pinned version");
 assert.match(index, /vendor\/OrbitControls-r128\.js/, "OrbitControls must be self-hosted at the pinned version");
+assert.match(index, /vendor\/GLTFLoader-r128\.js/, "GLTFLoader must be self-hosted at the pinned Three.js version");
+assert.match(index, /vendor\/meshopt_decoder\.js/, "Meshopt decoder must be self-hosted for compressed GLB assets");
 assert.doesNotMatch(index, /<script\b[^>]*\bsrc\s*=\s*["']https?:\/\//i, "Builder must not load JavaScript from remote origins");
 assert.match(index, /href=["']privacy\.html["']/i, "Builder must link to the Privacy Policy");
 assert.match(index, /href=["']terms\.html["']/i, "Builder must link to Terms and Conditions");
@@ -67,6 +69,15 @@ assert.match(appSource, /const lightRing = new THREE\.Mesh/, "Fans must have a s
 assert.match(appSource, /PSU fan grille on the side facing the glass panel/, "PSU model must include visible fan grille detail");
 assert.match(appSource, /PCIe connector with individual gold contacts/, "GPU model must include connector contact detail");
 assert.match(appSource, /Socket latch and retention arm/, "Motherboard model must include CPU socket retention detail");
+assert.match(appSource, /function buildGPUProcedural\(\)/, "GPU must retain a procedural fallback if the GLB cannot load");
+assert.match(appSource, /new THREE\.GLTFLoader\(\)/, "GPU must load its detailed GLB mesh");
+assert.match(appSource, /setMeshoptDecoder/, "Compressed GLB decoding must be configured");
+assert.ok(fs.existsSync(path.join(root, "assets/models/gpu.glb")), "GPU GLB asset is missing");
+assert.ok(fs.existsSync(path.join(root, "assets/models/cpu.glb")), "CPU GLB asset is missing");
+assert.ok(fs.existsSync(path.join(root, "assets/models/psu.glb")), "PSU GLB asset is missing");
+assert.ok(fs.existsSync(path.join(root, "vendor/MESHOPT-LICENSE.txt")), "Meshopt decoder license notice is missing");
+assert.match(read("assets/models/README.md"), /CC BY 4\.0/, "3D asset attribution must record its license");
+assert.match(index, /model-attribution/, "The third-party GPU model must be credited on the site");
 assert.match(appSource, /Object\.assign\(selected, restored\)/, "Restoring a build must apply all selected parts");
 assert.match(workspaceSource, /schemaVersion:2/, "New snapshots must use schema version 2");
 assert.match(workspaceSource, /selectionIds:window\.RigCraft3D\?\.getSelectedPartIds\(\)/, "Snapshots must save stable part IDs");
