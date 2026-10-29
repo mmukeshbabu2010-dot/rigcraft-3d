@@ -211,6 +211,11 @@ let realisticGpuAsset = null;
 let realisticGpuAnimations = [];
 let realisticCpuAsset = null;
 let realisticPsuAsset = null;
+let realisticMotherboardAsset = null;
+let realisticCoolerAsset = null;
+let realisticRamAsset = null;
+let realisticStorageAsset = null;
+let realisticCoolerAnimations = [];
 let gpuMixer = null;
 let gpuFanAction = null;
 
@@ -241,6 +246,19 @@ function loadRealisticModels() {
   load("assets/models/psu.glb", (gltf) => {
     realisticPsuAsset = gltf.scene;
   }, "PSU");
+  load("assets/models/motherboard.glb", (gltf) => {
+    realisticMotherboardAsset = gltf.scene;
+  }, "motherboard");
+  load("assets/models/cooler.glb", (gltf) => {
+    realisticCoolerAsset = gltf.scene;
+    realisticCoolerAnimations = gltf.animations || [];
+  }, "CPU cooler");
+  load("assets/models/ram.glb", (gltf) => {
+    realisticRamAsset = gltf.scene;
+  }, "RAM");
+  load("assets/models/storage.glb", (gltf) => {
+    realisticStorageAsset = gltf.scene;
+  }, "storage");
 }
 
 const categoryInfo = {
@@ -505,7 +523,7 @@ function buildChassis() {
 }
 
 /* Fit an attributed GLB to a known scene-space box. */
-function addFittedAsset(parent, asset, rotation, targetSize, targetPosition) {
+function addFittedAsset(parent, asset, rotation, targetSize, targetPosition, options = {}) {
   const model = THREE.SkeletonUtils
     ? THREE.SkeletonUtils.clone(asset)
     : asset.clone(true);
@@ -528,12 +546,26 @@ function addFittedAsset(parent, asset, rotation, targetSize, targetPosition) {
 
   const fittedBounds = new THREE.Box3().setFromObject(fitGroup);
   const center = fittedBounds.getCenter(new THREE.Vector3());
-  fitGroup.position.set(
-    targetPosition[0] - center.x,
-    targetPosition[1] - center.y,
-    targetPosition[2] - center.z
-  );
+  const offsetWorld = options.offsetWorld || [0, 0, 0];
+  if (options.anchorOffset) {
+    const anchorOffset = new THREE.Vector3(...options.anchorOffset)
+      .applyEuler(model.rotation)
+      .multiply(fitGroup.scale);
+    fitGroup.position.set(
+      targetPosition[0] - center.x - anchorOffset.x,
+      targetPosition[1] - center.y - anchorOffset.y,
+      targetPosition[2] - center.z - anchorOffset.z
+    );
+  } else {
+    fitGroup.position.set(
+      targetPosition[0] - center.x + offsetWorld[0],
+      targetPosition[1] - center.y + offsetWorld[1],
+      targetPosition[2] - center.z + offsetWorld[2]
+    );
+  }
+  const hiddenNodes = new Set(options.hideNodes || []);
   fitGroup.traverse((object) => {
+    if (hiddenNodes.has(object.name)) object.visible = false;
     if (!object.isMesh) return;
     if (object.geometry) object.geometry = object.geometry.clone();
     object.castShadow = true;
@@ -548,7 +580,38 @@ function addFittedAsset(parent, asset, rotation, targetSize, targetPosition) {
 function buildMotherboard() {
   clearGroup(internals);
 
-  box(internals, [0.065, 1.8, 1.75], [-0.76, 0.02, 0], boardMaterial);
+  if (realisticMotherboardAsset) {
+    // Real ASUS Strix B550-F board mesh. The PCB body is centred in the case;
+    // the extra mesh extent contains its I/O shroud and VRM heatsinks.
+    addFittedAsset(
+      internals,
+      realisticMotherboardAsset,
+      [Math.PI / 2, Math.PI / 2, 0],
+      [0.331, 2.06, 2.04],
+      [-0.76, 0.02, 0],
+      { hideNodes: ["Object_197"], offsetWorld: [0.141, 0.061, -0.2] }
+    );
+
+    // Seat the real CPU, DIMMs and M.2 drive on the component side of the board.
+    if (realisticCpuAsset) {
+      addFittedAsset(internals, realisticCpuAsset, [Math.PI / 2, Math.PI / 2, 0], [0.025, 0.21, 0.21], [-0.71, 0.374, -0.083]);
+    } else {
+      box(internals, [0.025, 0.21, 0.21], [-0.71, 0.374, -0.083], silver);
+    }
+    for (const z of [-0.53, -0.41]) {
+      if (realisticRamAsset) {
+        addFittedAsset(internals, realisticRamAsset, [Math.PI / 2, 0, 0], [0.05, 0.84, 0.18], [-0.69, 0.37, z]);
+      } else {
+        box(internals, [0.05, 0.84, 0.18], [-0.69, 0.37, z], darkMetal);
+      }
+    }
+    if (realisticStorageAsset) {
+      addFittedAsset(internals, realisticStorageAsset, [Math.PI / 2, Math.PI / 2, 0], [0.02, 0.13, 0.59], [-0.71, -0.039, 0.189]);
+    } else {
+      box(internals, [0.02, 0.13, 0.59], [-0.71, -0.039, 0.189], darkMetal);
+    }
+  } else {
+    box(internals, [0.065, 1.8, 1.75], [-0.76, 0.02, 0], boardMaterial);
 
   // PCB traces.
   const traceMaterial = material(0x35605e, 0.28, 0.65);
@@ -636,13 +699,18 @@ function buildMotherboard() {
     box(internals, [0.04, 0.08, 0.07], [-0.67, -0.63, 0.48 + i * 0.09], darkMetal);
   }
 
+  }
+
+  // PSU mesh is placed and scaled separately from the motherboard.
+  // Use the mesh's actual body dimensions, and hide its known stray cube.
+  // The target height includes the stray node so the visible PSU body remains 80 mm tall.
   // Use a generic PSU mesh when available, with the detailed procedural
   // housing retained as a fallback.
   if (realisticPsuAsset) {
-    addFittedAsset(internals, realisticPsuAsset, [0, Math.PI / 2, 0], [0.68, 0.38, 0.72], [-0.24, -0.83, -0.52]);
+    addFittedAsset(internals, realisticPsuAsset, [0, Math.PI / 2, 0], [0.944, 0.986, 0.885], [-0.24, -0.83, -0.52], { hideNodes: ["Object_78"], offsetWorld: [0, 0.257, 0] });
   } else {
     // PSU shroud and visible power-supply housing.
-    box(internals, [0.68, 0.38, 0.72], [-0.24, -0.83, -0.52], darkMetal);
+    box(internals, [0.944, 0.472, 0.885], [-0.24, -0.83, -0.52], darkMetal);
     box(internals, [0.03, 0.22, 0.38], [0.11, -0.83, -0.52], metal);
 
     // PSU fan grille on the side facing the glass panel.
@@ -666,22 +734,37 @@ function buildMotherboard() {
     }
   }
 
-  // CPU air cooler and stacked heatsink fins.
-  box(internals, [0.25, 0.52, 0.52], [-0.15, 0.32, -0.22], metal);
-
-  for (let i = 0; i < 9; i++) {
-    box(
+  // Real AIO assembly: anchor the pump directly to the CPU, letting its
+  // radiator and tubes retain their authored relationship to the pump.
+  if (realisticCoolerAsset) {
+    addFittedAsset(
       internals,
-      [0.28, 0.014, 0.53],
-      [-0.15, 0.08 + i * 0.055, -0.22],
-      silver,
-      { castShadow: false }
+      realisticCoolerAsset,
+      [0, Math.PI / 2, 0],
+      [1.3, 0.9, 0.65],
+      [-0.71, 0.374, -0.083],
+      { anchorOffset: [0.517, -0.589, -0.529] }
     );
+  } else {
+    // Procedural fallback cooler sits directly over the selected CPU socket.
+    const coolerCenter = realisticMotherboardAsset ? [-0.59, 0.374, -0.083] : [-0.15, 0.32, -0.22];
+    box(internals, [0.25, 0.52, 0.52], coolerCenter, metal);
+
+    for (let i = 0; i < 9; i++) {
+      box(
+        internals,
+        [0.28, 0.014, 0.53],
+        [coolerCenter[0], coolerCenter[1] - 0.24 + i * 0.055, coolerCenter[2]],
+        silver,
+        { castShadow: false }
+      );
+    }
+
+    addFan(internals, [coolerCenter[0] + 0.19, coolerCenter[1], coolerCenter[2]], "x", 0.19);
   }
 
-  addFan(internals, [0.02, 0.32, -0.22], "x", 0.19);
-
-  // I/O ports.
+  if (!realisticMotherboardAsset) {
+  // I/O ports (procedural fallback only).
   for (let i = 0; i < 5; i++) {
     box(
       internals,
@@ -702,6 +785,7 @@ function buildMotherboard() {
       "y",
       16
     );
+  }
   }
 }
 
