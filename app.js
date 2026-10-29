@@ -432,26 +432,23 @@ function buildChassis() {
   const height = 2.35;
   const depth = 2.15;
   const frameSize = 0.075;
-
+  const caseId = selected.cases?.id || "corsair-5000d";
+  const isCompact = caseId === "compact-itx";
+  const isCorsair = caseId === "corsair-5000d";
   const frameMaterial = material(
     hex(selected.cases?.color_hex, 0x263441),
     0.8,
     0.25
   );
+  const frontMaterial = material(isCompact ? 0x111820 : 0x171e27, 0.64, 0.38);
+  const ventMaterial = material(isCorsair ? 0x35414b : 0x252f39, 0.52, 0.48);
 
-  // Structural corner posts.
+  // Rigid steel frame, separate rails and corner posts.
   for (const x of [-width / 2, width / 2]) {
     for (const z of [-depth / 2, depth / 2]) {
-      box(
-        chassis,
-        [frameSize, height, frameSize],
-        [x, 0, z],
-        frameMaterial
-      );
+      box(chassis, [frameSize, height, frameSize], [x, 0, z], frameMaterial);
     }
   }
-
-  // Upper and lower rails.
   for (const y of [-height / 2, height / 2]) {
     box(chassis, [width, frameSize, frameSize], [0, y, depth / 2], frameMaterial);
     box(chassis, [width, frameSize, frameSize], [0, y, -depth / 2], frameMaterial);
@@ -459,66 +456,64 @@ function buildChassis() {
     box(chassis, [frameSize, frameSize, depth], [width / 2, y, 0], frameMaterial);
   }
 
-  // Motherboard tray and rear panel.
-  box(
-    chassis,
-    [0.04, height - 0.15, depth - 0.15],
-    [-width / 2 + 0.04, 0, 0],
-    darkMetal
-  );
+  // Motherboard tray and rear I/O structure.
+  box(chassis, [0.04, height - 0.15, depth - 0.15], [-width / 2 + 0.04, 0, 0], darkMetal);
+  box(chassis, [0.035, 0.6, 0.8], [-0.78, -0.78, -0.55], metal);
 
-  box(
-    chassis,
-    [0.035, 0.6, 0.8],
-    [-0.78, -0.78, -0.55],
-    metal
-  );
+  // A solid, layered front fascia makes the three case choices visually distinct.
+  const fasciaWidth = isCompact ? 0.66 : isCorsair ? 0.86 : 0.78;
+  const fasciaHeight = isCompact ? 1.88 : 2.08;
+  box(chassis, [fasciaWidth, fasciaHeight, 0.035], [0, 0, depth / 2 + 0.006], frontMaterial);
+  box(chassis, [0.018, fasciaHeight - 0.12, 0.014], [-fasciaWidth / 2 + 0.045, 0, depth / 2 + 0.03], frameMaterial, { castShadow: false });
+  box(chassis, [0.018, fasciaHeight - 0.12, 0.014], [fasciaWidth / 2 - 0.045, 0, depth / 2 + 0.03], frameMaterial, { castShadow: false });
 
-  // Side glass.
-  const glass = box(
-    chassis,
-    [0.018, height - 0.14, depth - 0.14],
-    [width / 2 - 0.025, 0, 0],
-    glassMaterial,
-    { castShadow: false, name: "side-glass" }
-  );
-  glass.visible = !sidePanelRemoved;
-
-  // Side panel mounting screws.
-  for (const y of [-0.95, 0.95]) {
-    for (const z of [-0.78, 0.78]) {
-      cylinder(
-        chassis,
-        0.027,
-        0.025,
-        [width / 2 + 0.003, y, z],
-        silver,
-        "x",
-        16
-      );
+  // Front intake pattern: wide vertical slots on the 5000D, dense mesh on the
+  // mid-tower, and a compact central intake on the Mini-ITX enclosure.
+  if (isCorsair) {
+    for (let i = 0; i < 13; i++) {
+      const x = -fasciaWidth * 0.39 + i * fasciaWidth * 0.065;
+      box(chassis, [0.012, fasciaHeight * 0.78, 0.008], [x, 0, depth / 2 + 0.029], ventMaterial, { castShadow: false });
+    }
+  } else if (isCompact) {
+    for (let row = 0; row < 13; row++) {
+      for (let col = 0; col < 5; col++) {
+        box(chassis, [0.018, 0.018, 0.009], [-0.19 + col * 0.095, -0.52 + row * 0.087, depth / 2 + 0.03], ventMaterial, { castShadow: false });
+      }
+    }
+  } else {
+    for (let row = 0; row < 18; row++) {
+      for (let col = 0; col < 9; col++) {
+        if ((row + col) % 2 === 0) {
+          box(chassis, [0.025, 0.025, 0.009], [-0.31 + col * 0.078, -0.72 + row * 0.083, depth / 2 + 0.03], ventMaterial, { castShadow: false });
+        }
+      }
     }
   }
 
-  // Expansion slot details.
+  // Top dust-filter panel and front I/O: USB ports, audio jack and power button.
+  box(chassis, [width - 0.24, 0.018, 0.34], [0, height / 2 + 0.006, depth * 0.23], darkMetal, { castShadow: false });
+  for (let i = 0; i < (isCompact ? 8 : 15); i++) {
+    box(chassis, [0.018, 0.008, 0.23], [-0.55 + i * (isCompact ? 0.15 : 0.08), height / 2 + 0.018, depth * 0.23], ventMaterial, { castShadow: false });
+  }
+  for (let i = 0; i < 2; i++) {
+    box(chassis, [0.065, 0.022, 0.018], [0.48 + i * 0.09, height / 2 + 0.019, depth * 0.23], silver, { castShadow: false });
+  }
+  cylinder(chassis, isCompact ? 0.035 : 0.045, 0.025, [0.71, height / 2 + 0.02, depth * 0.23], rgbMaterial, "y", 20);
+
+  // Side glass, mounting hardware and the rear expansion-slot stack.
+  const glass = box(chassis, [0.018, height - 0.14, depth - 0.14], [width / 2 - 0.025, 0, 0], glassMaterial, { castShadow: false, name: "side-glass" });
+  glass.visible = !sidePanelRemoved;
+  for (const y of [-0.95, 0.95]) {
+    for (const z of [-0.78, 0.78]) cylinder(chassis, 0.027, 0.025, [width / 2 + 0.003, y, z], silver, "x", 16);
+  }
   for (let i = 0; i < 7; i++) {
-    box(
-      chassis,
-      [0.02, 0.022, 0.38],
-      [-width / 2 + 0.07, -0.48 + i * 0.115, -0.72],
-      silver,
-      { castShadow: false }
-    );
+    box(chassis, [0.02, 0.022, 0.38], [-width / 2 + 0.07, -0.48 + i * 0.115, -0.72], silver, { castShadow: false });
   }
 
-  // Front-panel detailing.
-  for (let i = 0; i < 8; i++) {
-    box(
-      chassis,
-      [0.012, 0.018, 0.3],
-      [width / 2 - 0.05, -0.75 + i * 0.1, 0.55],
-      darkMetal,
-      { castShadow: false }
-    );
+  // Bottom feet and a recessed lower intake add depth to the enclosure silhouette.
+  for (const x of [-0.58, 0.58]) {
+    box(chassis, [0.22, 0.085, 0.3], [x, -height / 2 - 0.035, depth / 2 - 0.16], darkMetal);
+    box(chassis, [0.18, 0.025, 0.24], [x, -height / 2 - 0.08, depth / 2 - 0.16], material(0x080b10, 0.15, 0.85));
   }
 }
 
@@ -794,76 +789,74 @@ function buildMotherboard() {
 function buildGPUProcedural() {
   clearGroup(gpuGroup);
 
-  const gpu = selected.gpus;
-  const width = Math.max(0.55, Math.min(Number(gpu?.size_x) || 0.8, 1.3));
-  const gpuMaterial = material(hex(gpu?.color_hex), 0.76, 0.24);
+  const gpu = selected.gpus || {};
+  const width = Math.max(0.55, Math.min(Number(gpu.size_x) || 0.8, 1.3));
+  const lengthMm = Math.max(180, Math.min(Number(gpu.length_mm) || 304, 420));
+  const lengthScale = lengthMm / 304;
+  const gpuId = gpu.id || "generic-gpu";
+  const isAmdFlagship = gpuId === "rx7900xtx";
+  const isAmdMidrange = gpuId === "rx7800xt";
+  const isCompact = gpuId === "rtx4070";
+  const fanCount = isCompact || isAmdMidrange ? 2 : 3;
+  const accentHex = isAmdFlagship ? 0xe63946 : isAmdMidrange ? 0xb34a52 : gpuId === "rtx4070-super" ? 0x8da6b8 : 0x45a29e;
+  const accentMaterial = material(accentHex, 0.36, 0.28, { emissive: accentHex, emissiveIntensity: 0.08 });
+  const gpuMaterial = material(hex(gpu.color_hex), 0.76, 0.24);
+  const card = new THREE.Group();
+  gpuGroup.add(card);
 
-  // Card body, backplate and lower edge.
-  box(gpuGroup, [width, 0.36, 1.26], [-0.02, -0.16, 0.02], gpuMaterial);
-  box(gpuGroup, [width + 0.025, 0.025, 1.23], [-0.02, 0.04, 0.02], metal);
-  box(gpuGroup, [width, 0.025, 1.23], [-0.02, -0.35, 0.02], darkMetal);
-
-  // Heatsink ribs visible along the card edge.
-  for (let i = 0; i < 12; i++) {
-    const z = -0.54 + i * 0.1;
-    box(
-      gpuGroup,
-      [width * 0.82, 0.018, 0.025],
-      [-0.02, -0.36, z],
-      silver,
-      { castShadow: false }
-    );
+  // Board, heatsink, backplate and a layered cooler shroud.
+  box(card, [width, 0.36, 1.26], [-0.02, -0.16, 0.02], gpuMaterial);
+  box(card, [width + 0.025, 0.025, 1.23], [-0.02, 0.04, 0.02], metal);
+  box(card, [width, 0.025, 1.23], [-0.02, -0.35, 0.02], darkMetal);
+  for (let i = 0; i < 16; i++) {
+    const z = -0.57 + i * 0.076;
+    box(card, [width * 0.82, 0.018, 0.025], [-0.02, -0.36, z], i % 3 === 0 ? silver : metal, { castShadow: false });
   }
 
-  // Triple-fan GPU cooler.
-  for (const z of [-0.38, 0.02, 0.42]) {
-    const fan = addFan(
-      gpuGroup,
-      [-0.02, 0.055, z],
-      "y",
-      0.155
-    );
-    fan.scale.setScalar(0.9);
+  // Different board partners use different cooler layouts instead of a cloned
+  // three-fan card: compact dual-fan, AMD dual-fan, or triple-fan designs.
+  const fanPositions = fanCount === 2 ? [-0.32, 0.32] : [-0.4, 0, 0.4];
+  const fanRadius = isCompact ? 0.19 : isAmdFlagship ? 0.165 : 0.155;
+  for (const z of fanPositions) {
+    const fan = addFan(card, [-0.02, 0.055, z], "y", fanRadius);
+    fan.scale.set(0.94, 0.94, isAmdFlagship ? 1.05 : 0.94);
   }
 
-  // Layered shroud rails and a restrained light strip.
-  box(gpuGroup, [width * 0.92, 0.035, 1.2], [-0.02, 0.245, 0.02], darkMetal);
-  box(gpuGroup, [width * 0.86, 0.025, 1.13], [-0.02, 0.267, 0.02], gpuMaterial);
-  box(
-    gpuGroup,
-    [0.018, 0.035, 0.8],
-    [width / 2 + 0.014, -0.16, 0.02],
-    rgbMaterial,
-    { castShadow: false }
-  );
+  // The shroud geometry changes by family, with a contrasting rail and a
+  // visible side accent that remains readable through the case window.
+  box(card, [width * 0.92, 0.035, 1.2], [-0.02, 0.245, 0.02], darkMetal);
+  box(card, [width * 0.86, 0.025, 1.13], [-0.02, 0.267, 0.02], gpuMaterial);
+  box(card, [0.025, 0.045, isCompact ? 0.62 : 0.86], [width / 2 + 0.014, -0.16, 0.02], accentMaterial, { castShadow: false });
+  if (isAmdFlagship || isAmdMidrange) {
+    box(card, [width * 0.76, 0.018, 0.055], [-0.02, 0.286, 0.02], accentMaterial, { castShadow: false });
+  } else if (isCompact) {
+    box(card, [width * 0.54, 0.018, 0.12], [-0.02, 0.286, 0.02], silver, { castShadow: false });
+  } else {
+    box(card, [width * 0.68, 0.018, 0.035], [-0.02, 0.286, 0.02], accentMaterial, { castShadow: false });
+  }
 
-  // Visible fasteners around the cooler and backplate.
+  // Backplate fasteners and the PCIe connector with individual gold contacts.
   for (const z of [-0.52, 0.52]) {
-    for (const x of [-width * 0.38, width * 0.38]) {
-      cylinder(gpuGroup, 0.018, 0.018, [x, 0.075, z], silver, "y", 12);
-    }
+    for (const x of [-width * 0.38, width * 0.38]) cylinder(card, 0.018, 0.018, [x, 0.075, z], silver, "y", 12);
   }
+  box(card, [0.15, 0.045, 0.88], [-width / 2 - 0.08, -0.35, 0.02], silver);
+  const gold = material(0xc5a45a, 0.78, 0.24);
+  for (let i = 0; i < 18; i++) box(card, [0.008, 0.012, 0.027], [-width / 2 - 0.08 + i * 0.008, -0.378, 0.02], gold, { castShadow: false });
+  box(card, [0.035, 0.27, 0.42], [width / 2 + 0.03, -0.16, -0.38], metal);
+  for (let i = 0; i < 5; i++) box(card, [0.012, 0.018, 0.045], [width / 2 + 0.05, -0.22 + i * 0.045, -0.38], darkMetal, { castShadow: false });
+  box(card, [0.12, 0.11, 0.22], [width * 0.24, 0.12, -0.48], darkMetal);
+  for (let i = 0; i < 4; i++) box(card, [0.012, 0.035, 0.03], [width * 0.24 + 0.067, 0.12, -0.55 + i * 0.045], silver, { castShadow: false });
 
-  // PCIe connector with individual gold contacts and the I/O bracket.
-  box(gpuGroup, [0.15, 0.045, 0.88], [-width / 2 - 0.08, -0.35, 0.02], silver);
-  for (let i = 0; i < 18; i++) {
-    box(gpuGroup, [0.008, 0.012, 0.027], [-width / 2 - 0.08 + i * 0.008, -0.378, 0.02], material(0xc5a45a, 0.78, 0.24), { castShadow: false });
-  }
-  box(gpuGroup, [0.035, 0.27, 0.42], [width / 2 + 0.03, -0.16, -0.38], metal);
-  for (let i = 0; i < 5; i++) {
-    box(gpuGroup, [0.012, 0.018, 0.045], [width / 2 + 0.05, -0.22 + i * 0.045, -0.38], darkMetal, { castShadow: false });
-  }
-  // Power connector block and separated socket openings.
-  box(gpuGroup, [0.12, 0.11, 0.22], [width * 0.24, 0.12, -0.48], darkMetal);
-  for (let i = 0; i < 4; i++) {
-    box(gpuGroup, [0.012, 0.035, 0.03], [width * 0.24 + 0.067, 0.12, -0.55 + i * 0.045], silver, { castShadow: false });
-  }
-
+  // Scale only the card's long axis to its listed catalogue length.
+  card.scale.z = lengthScale;
   gpuGroup.position.set(-0.03, -0.1, 0.03);
 }
 
 function buildGPU() {
-  if (!realisticGpuAsset) {
+  // The only bundled GPU asset is a reference RTX 3080 mesh, not a library of
+  // exact SKUs. Use it for the flagship reference; give other catalogue cards
+  // their own fan count, shroud, accents and length rather than reusing it.
+  if (!realisticGpuAsset || selected.gpus?.id !== "rtx4090") {
     gpuMixer = null;
     gpuFanAction = null;
     buildGPUProcedural();
@@ -873,41 +866,27 @@ function buildGPU() {
   clearGroup(gpuGroup);
   gpuMixer = null;
   gpuFanAction = null;
-
-  // The source mesh's long axis is local Y. Turn it into the scene's Z axis,
-  // then fit uniformly to the selected card length so its proportions survive.
-  const model = THREE.SkeletonUtils
-    ? THREE.SkeletonUtils.clone(realisticGpuAsset)
-    : realisticGpuAsset.clone(true);
+  const model = THREE.SkeletonUtils ? THREE.SkeletonUtils.clone(realisticGpuAsset) : realisticGpuAsset.clone(true);
   model.rotation.x = Math.PI / 2;
   model.updateMatrixWorld(true);
-
   const initialBounds = new THREE.Box3().setFromObject(model);
   const initialSize = initialBounds.getSize(new THREE.Vector3());
   const selectedLength = Math.max(180, Math.min(Number(selected.gpus?.length_mm) || 304, 420));
   const targetLength = 1.26 * (selectedLength / 304);
   const fitScale = targetLength / Math.max(initialSize.z, 0.001);
   model.scale.multiplyScalar(fitScale);
-
-  // Clone geometry because clearGroup disposes per-instance geometry on rebuild.
-  // Materials remain shared and are intentionally not disposed by clearGroup.
   model.traverse((object) => {
     if (!object.isMesh) return;
     if (object.geometry) object.geometry = object.geometry.clone();
     object.castShadow = true;
     object.receiveShadow = true;
   });
-
   model.updateMatrixWorld(true);
   const fittedBounds = new THREE.Box3().setFromObject(model);
   model.position.sub(fittedBounds.getCenter(new THREE.Vector3()));
   gpuGroup.add(model);
   gpuGroup.position.set(-0.03, -0.1, 0.03);
-
-  // The model includes fan-speed clips. Play a restrained speed by default
-  // and pause it when the existing Fans control is switched off.
-  const fanClip = realisticGpuAnimations.find((clip) => /fan_1200rpm/i.test(clip.name))
-    || realisticGpuAnimations.find((clip) => /fan_1500rpm/i.test(clip.name));
+  const fanClip = realisticGpuAnimations.find((clip) => /fan_1200rpm/i.test(clip.name)) || realisticGpuAnimations.find((clip) => /fan_1500rpm/i.test(clip.name));
   if (fanClip) {
     gpuMixer = new THREE.AnimationMixer(model);
     gpuFanAction = gpuMixer.clipAction(fanClip);
