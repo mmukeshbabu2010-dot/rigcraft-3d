@@ -12,6 +12,9 @@
   <link rel="stylesheet" href="selection-tools.css">
   <link rel="stylesheet" href="legal.css">
   <script src="vendor/three-r128.min.js" referrerpolicy="no-referrer"></script>
+  <script src="vendor/GLTFLoader-r128.js" referrerpolicy="no-referrer"></script>
+  <script src="vendor/meshopt_decoder.js" referrerpolicy="no-referrer"></script>
+  <script src="vendor/SkeletonUtils-r128.js" referrerpolicy="no-referrer"></script>
   <script src="vendor/OrbitControls-r128.js" referrerpolicy="no-referrer"></script>
 </head>
 <body>
@@ -25,7 +28,8 @@
         <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
         <button id="reset-camera" type="button">Reset view</button>
       </div>
-      <p class="viewport-hint">Drag to rotate. Scroll or pinch to zool.</p>
+      <p class="viewport-hint">Drag to rotate. Scroll or pinch to zoom.</p>
+      <p class="viewport-model-note">GPU mesh is illustrative and may differ from the selected catalogue part.</p>
     </section>
 
     <aside id="ui-sidebar">
@@ -129,6 +133,7 @@
       </section>
 
       <footer class="site-footer">
+        <p class="model-attribution">3D assets: “GeForce RTX 3080 Graphics Card” by _surovic_, “PC CPU processor” by apleesee, and “PSU Power Supply Unit” by Groovex, via Sketchfab, licensed <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>. <a href="https://sketchfab.com/3d-models/geforce-rtx-3080-graphics-card-8b947ee1bf7a4e3d8ffa1c24893ac160" target="_blank" rel="noopener noreferrer">GPU source</a>, <a href="https://sketchfab.com/3d-models/pc-cpu-processor-efb6b95b255c4a37a9661df178ea3bb3" target="_blank" rel="noopener noreferrer">CPU source</a>, <a href="https://sketchfab.com/3d-models/psu-power-supply-unit-69ccd1be3a77497cb2acc9e39e7c52b3" target="_blank" rel="noopener noreferrer">PSU source</a>.</p>
         <p>© <span id="copyright-year"></span> RigCraft 3D. Independent project.</p>
         <nav aria-label="Legal and project links">
           <a href="privacy.html">Privacy Policy</a>

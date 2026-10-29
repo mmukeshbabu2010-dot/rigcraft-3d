@@ -205,6 +205,44 @@ const selected = {
   psus: null
 };
 
+// These attributed GLB meshes replace the most visible generic placeholders.
+// If any asset fails to load, its procedural model remains as a fallback.
+let realisticGpuAsset = null;
+let realisticGpuAnimations = [];
+let realisticCpuAsset = null;
+let realisticPsuAsset = null;
+let gpuMixer = null;
+let gpuFanAction = null;
+
+function loadRealisticModels() {
+  if (!THREE.GLTFLoader || !window.MeshoptDecoder) return;
+
+  const loader = new THREE.GLTFLoader();
+  loader.setMeshoptDecoder(window.MeshoptDecoder);
+  const load = (url, onLoaded, label) => {
+    loader.load(
+      url,
+      (gltf) => {
+        onLoaded(gltf);
+        if (hardwareLoaded) rebuildScene();
+      },
+      undefined,
+      (error) => console.warn("RigCraft 3D: using the procedural " + label + " fallback because its model could not be loaded.", error)
+    );
+  };
+
+  load("assets/models/gpu.glb", (gltf) => {
+    realisticGpuAsset = gltf.scene;
+    realisticGpuAnimations = gltf.animations || [];
+  }, "GPU");
+  load("assets/models/cpu.glb", (gltf) => {
+    realisticCpuAsset = gltf.scene;
+  }, "CPU");
+  load("assets/models/psu.glb", (gltf) => {
+    realisticPsuAsset = gltf.scene;
+  }, "PSU");
+}
+
 const categoryInfo = {
   cases: { label: "Case" },
   motherboards: { label: "Motherboard" },
@@ -466,6 +504,45 @@ function buildChassis() {
   }
 }
 
+/* Fit an attributed GLB to a known scene-space box. */
+function addFittedAsset(parent, asset, rotation, targetSize, targetPosition) {
+  const model = THREE.SkeletonUtils
+    ? THREE.SkeletonUtils.clone(asset)
+    : asset.clone(true);
+  model.rotation.set(...rotation);
+
+  // Scale the parent group in world axes after the model has been reoriented.
+  // This keeps the CPU's thin axis and the PSU's front/back orientation correct.
+  const fitGroup = new THREE.Group();
+  fitGroup.add(model);
+  fitGroup.updateMatrixWorld(true);
+
+  const initialBounds = new THREE.Box3().setFromObject(fitGroup);
+  const initialSize = initialBounds.getSize(new THREE.Vector3());
+  fitGroup.scale.set(
+    targetSize[0] / Math.max(initialSize.x, 0.001),
+    targetSize[1] / Math.max(initialSize.y, 0.001),
+    targetSize[2] / Math.max(initialSize.z, 0.001)
+  );
+  fitGroup.updateMatrixWorld(true);
+
+  const fittedBounds = new THREE.Box3().setFromObject(fitGroup);
+  const center = fittedBounds.getCenter(new THREE.Vector3());
+  fitGroup.position.set(
+    targetPosition[0] - center.x,
+    targetPosition[1] - center.y,
+    targetPosition[2] - center.z
+  );
+  fitGroup.traverse((object) => {
+    if (!object.isMesh) return;
+    if (object.geometry) object.geometry = object.geometry.clone();
+    object.castShadow = true;
+    object.receiveShadow = true;
+  });
+  parent.add(fitGroup);
+  return fitGroup;
+}
+
 /* Motherboard, CPU cooler, RAM and internal details */
 
 function buildMotherboard() {
@@ -496,8 +573,12 @@ function buildMotherboard() {
   // CPU socket and heat spreader.
   box(internals, [0.12, 0.35, 0.35], [-0.59, 0.3, -0.22], darkMetal);
   box(internals, [0.025, 0.31, 0.31], [-0.51, 0.3, -0.22], metal);
-  box(internals, [0.035, 0.255, 0.255], [-0.49, 0.3, -0.22], silver);
-  box(internals, [0.012, 0.21, 0.21], [-0.468, 0.3, -0.22], chipMaterial);
+  if (realisticCpuAsset) {
+    addFittedAsset(internals, realisticCpuAsset, [0, 0, Math.PI / 2], [0.025, 0.21, 0.21], [-0.468, 0.3, -0.22]);
+  } else {
+    box(internals, [0.035, 0.255, 0.255], [-0.49, 0.3, -0.22], silver);
+    box(internals, [0.012, 0.21, 0.21], [-0.468, 0.3, -0.22], chipMaterial);
+  }
   // Socket latch and retention arm.
   box(internals, [0.035, 0.28, 0.025], [-0.475, 0.3, -0.39], silver);
   box(internals, [0.06, 0.018, 0.025], [-0.45, 0.43, -0.39], metal);
@@ -555,25 +636,33 @@ function buildMotherboard() {
     box(internals, [0.04, 0.08, 0.07], [-0.67, -0.63, 0.48 + i * 0.09], darkMetal);
   }
 
-  // PSU shroud and visible power-supply housing.
-  box(internals, [0.68, 0.38, 0.72], [-0.24, -0.83, -0.52], darkMetal);
-  box(internals, [0.03, 0.22, 0.38], [0.11, -0.83, -0.52], metal);
-  // PSU fan grille on the side facing the glass panel.
-  const psuFanRing = new THREE.Mesh(new THREE.TorusGeometry(0.135, 0.012, 6, 32), silver);
-  psuFanRing.rotation.y = Math.PI / 2;
-  psuFanRing.position.set(0.132, -0.83, -0.52);
-  internals.add(psuFanRing);
-  cylinder(internals, 0.112, 0.018, [0.13, -0.83, -0.52], darkMetal, "x", 32);
-  for (let i = 0; i < 9; i++) {
-    const angle = (i / 9) * Math.PI * 2;
-    box(internals, [0.012, 0.205, 0.009], [0.145, -0.83, -0.52], silver, { castShadow: false, rotation: [angle, 0, 0] });
-  }
-  cylinder(internals, 0.035, 0.02, [0.147, -0.83, -0.52], metal, "x", 20);
-  // PSU identification plate and modular output sockets.
-  box(internals, [0.012, 0.11, 0.23], [0.13, -0.83, -0.1], metal, { castShadow: false });
-  for (let row = 0; row < 2; row++) {
-    for (let col = 0; col < 3; col++) {
-      box(internals, [0.014, 0.045, 0.04], [0.145, -0.77 - row * 0.09, -0.23 + col * 0.07], darkMetal, { castShadow: false });
+  // Use a generic PSU mesh when available, with the detailed procedural
+  // housing retained as a fallback.
+  if (realisticPsuAsset) {
+    addFittedAsset(internals, realisticPsuAsset, [0, Math.PI / 2, 0], [0.68, 0.38, 0.72], [-0.24, -0.83, -0.52]);
+  } else {
+    // PSU shroud and visible power-supply housing.
+    box(internals, [0.68, 0.38, 0.72], [-0.24, -0.83, -0.52], darkMetal);
+    box(internals, [0.03, 0.22, 0.38], [0.11, -0.83, -0.52], metal);
+
+    // PSU fan grille on the side facing the glass panel.
+    const psuFanRing = new THREE.Mesh(new THREE.TorusGeometry(0.135, 0.012, 6, 32), silver);
+    psuFanRing.rotation.y = Math.PI / 2;
+    psuFanRing.position.set(0.132, -0.83, -0.52);
+    internals.add(psuFanRing);
+    cylinder(internals, 0.112, 0.018, [0.13, -0.83, -0.52], darkMetal, "x", 32);
+    for (let i = 0; i < 9; i++) {
+      const angle = (i / 9) * Math.PI * 2;
+      box(internals, [0.012, 0.205, 0.009], [0.145, -0.83, -0.52], silver, { castShadow: false, rotation: [angle, 0, 0] });
+    }
+    cylinder(internals, 0.035, 0.02, [0.147, -0.83, -0.52], metal, "x", 20);
+
+    // PSU identification plate and modular output sockets.
+    box(internals, [0.012, 0.11, 0.23], [0.13, -0.83, -0.1], metal, { castShadow: false });
+    for (let row = 0; row < 2; row++) {
+      for (let col = 0; col < 3; col++) {
+        box(internals, [0.014, 0.045, 0.04], [0.145, -0.77 - row * 0.09, -0.23 + col * 0.07], darkMetal, { castShadow: false });
+      }
     }
   }
 
@@ -618,7 +707,7 @@ function buildMotherboard() {
 
 /* GPU */
 
-function buildGPU() {
+function buildGPUProcedural() {
   clearGroup(gpuGroup);
 
   const gpu = selected.gpus;
@@ -687,6 +776,60 @@ function buildGPU() {
   }
 
   gpuGroup.position.set(-0.03, -0.1, 0.03);
+}
+
+function buildGPU() {
+  if (!realisticGpuAsset) {
+    gpuMixer = null;
+    gpuFanAction = null;
+    buildGPUProcedural();
+    return;
+  }
+
+  clearGroup(gpuGroup);
+  gpuMixer = null;
+  gpuFanAction = null;
+
+  // The source mesh's long axis is local Y. Turn it into the scene's Z axis,
+  // then fit uniformly to the selected card length so its proportions survive.
+  const model = THREE.SkeletonUtils
+    ? THREE.SkeletonUtils.clone(realisticGpuAsset)
+    : realisticGpuAsset.clone(true);
+  model.rotation.x = Math.PI / 2;
+  model.updateMatrixWorld(true);
+
+  const initialBounds = new THREE.Box3().setFromObject(model);
+  const initialSize = initialBounds.getSize(new THREE.Vector3());
+  const selectedLength = Math.max(180, Math.min(Number(selected.gpus?.length_mm) || 304, 420));
+  const targetLength = 1.26 * (selectedLength / 304);
+  const fitScale = targetLength / Math.max(initialSize.z, 0.001);
+  model.scale.multiplyScalar(fitScale);
+
+  // Clone geometry because clearGroup disposes per-instance geometry on rebuild.
+  // Materials remain shared and are intentionally not disposed by clearGroup.
+  model.traverse((object) => {
+    if (!object.isMesh) return;
+    if (object.geometry) object.geometry = object.geometry.clone();
+    object.castShadow = true;
+    object.receiveShadow = true;
+  });
+
+  model.updateMatrixWorld(true);
+  const fittedBounds = new THREE.Box3().setFromObject(model);
+  model.position.sub(fittedBounds.getCenter(new THREE.Vector3()));
+  gpuGroup.add(model);
+  gpuGroup.position.set(-0.03, -0.1, 0.03);
+
+  // The model includes fan-speed clips. Play a restrained speed by default
+  // and pause it when the existing Fans control is switched off.
+  const fanClip = realisticGpuAnimations.find((clip) => /fan_1200rpm/i.test(clip.name))
+    || realisticGpuAnimations.find((clip) => /fan_1500rpm/i.test(clip.name));
+  if (fanClip) {
+    gpuMixer = new THREE.AnimationMixer(model);
+    gpuFanAction = gpuMixer.clipAction(fanClip);
+    gpuFanAction.play();
+    gpuFanAction.paused = !fansEnabled;
+  }
 }
 
 /* Case fans */
@@ -809,6 +952,8 @@ function updateRgbState() {
 }
 
 function updateFanState() {
+  if (gpuFanAction) gpuFanAction.paused = !fansEnabled;
+  if (gpuMixer) gpuMixer.timeScale = 1;
   $("btn-fans").textContent = fansEnabled ? "Fans: On" : "Fans: Off";
   $("btn-fans").classList.toggle("active", fansEnabled);
   $("btn-fans").setAttribute("aria-pressed", String(fansEnabled));
@@ -1233,11 +1378,13 @@ function animate() {
     for (const rotor of fanRotors) {
       rotor.rotation.z += delta * 9;
     }
+    if (gpuMixer) gpuMixer.update(delta);
   }
 
   controls.update();
   renderer.render(scene, camera);
 }
 
+loadRealisticModels();
 initialize();
 animate();
