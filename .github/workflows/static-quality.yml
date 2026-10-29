@@ -24,11 +24,14 @@ jobs:
         run: |
           node --check app.js
           node --check js/workspace.js
+          node --check js/selection-tools.js
           node --check scripts/validate-site.mjs
           node --check scripts/test-compatibility.mjs
           node --check scripts/test-build-restore.mjs
+          node --check scripts/test-selection-tools.mjs
       - name: Validate pages, local assets, and parts catalogue
         run: |
           node scripts/validate-site.mjs
           node scripts/test-compatibility.mjs
           node scripts/test-build-restore.mjs
+          node scripts/test-selection-tools.mjs
