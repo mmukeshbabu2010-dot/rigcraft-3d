@@ -299,9 +299,16 @@ function addFan(parent, position, axis = "z", radius = 0.29) {
   // Outer rim and fan housing.
   const frame = new THREE.Mesh(
     new THREE.TorusGeometry(radius, 0.024, 8, 40),
-    rgbMaterial
+    frameMaterial
   );
   fan.add(frame);
+
+  const lightRing = new THREE.Mesh(
+    new THREE.TorusGeometry(radius * 0.84, 0.008, 6, 40),
+    rgbMaterial
+  );
+  lightRing.position.z = 0.012;
+  fan.add(lightRing);
 
   cylinder(fan, radius * 0.94, 0.045, [0, 0, 0], frameMaterial);
 
@@ -488,7 +495,13 @@ function buildMotherboard() {
 
   // CPU socket and heat spreader.
   box(internals, [0.12, 0.35, 0.35], [-0.59, 0.3, -0.22], darkMetal);
-  box(internals, [0.045, 0.26, 0.26], [-0.51, 0.3, -0.22], silver);
+  box(internals, [0.025, 0.31, 0.31], [-0.51, 0.3, -0.22], metal);
+  box(internals, [0.035, 0.255, 0.255], [-0.49, 0.3, -0.22], silver);
+  box(internals, [0.012, 0.21, 0.21], [-0.468, 0.3, -0.22], chipMaterial);
+  // Socket latch and retention arm.
+  box(internals, [0.035, 0.28, 0.025], [-0.475, 0.3, -0.39], silver);
+  box(internals, [0.06, 0.018, 0.025], [-0.45, 0.43, -0.39], metal);
+  cylinder(internals, 0.018, 0.035, [-0.45, 0.43, -0.39], silver, "x", 16);
 
   // VRM heatsinks with individual fins.
   box(internals, [0.12, 0.13, 0.66], [-0.6, 0.66, -0.38], metal);
@@ -510,8 +523,12 @@ function buildMotherboard() {
     box(internals, [0.08, 0.52, 0.055], [-0.6, 0.4, z], darkMetal);
 
     if (i % 2 === 0) {
-      box(internals, [0.1, 0.43, 0.075], [-0.53, 0.42, z], rgbMaterial);
-      box(internals, [0.015, 0.35, 0.06], [-0.47, 0.42, z], silver);
+      box(internals, [0.1, 0.43, 0.075], [-0.53, 0.42, z], darkMetal);
+      box(internals, [0.012, 0.35, 0.058], [-0.47, 0.42, z], rgbMaterial);
+      box(internals, [0.014, 0.04, 0.082], [-0.46, 0.64, z], silver);
+      box(internals, [0.014, 0.04, 0.082], [-0.46, 0.2, z], silver);
+    } else {
+      box(internals, [0.08, 0.39, 0.055], [-0.53, 0.42, z], darkMetal);
     }
   }
 
@@ -520,13 +537,45 @@ function buildMotherboard() {
   box(internals, [0.035, 0.045, 0.95], [-0.58, -0.52, 0.12], silver);
   box(internals, [0.035, 0.045, 0.62], [-0.58, -0.73, 0.25], silver);
 
-  // Chipset heatsink.
+  // M.2 cover screws and reinforced PCIe slot contacts.
+  for (const z of [-0.02, 0.49]) {
+    cylinder(internals, 0.016, 0.025, [-0.535, -0.23, z], silver, "x", 12);
+  }
+  for (let i = 0; i < 14; i++) {
+    box(internals, [0.014, 0.014, 0.025], [-0.55, -0.49, -0.34 + i * 0.052], silver, { castShadow: false });
+  }
+
+  // Chipset heatsink with a machined top and fasteners.
   box(internals, [0.08, 0.2, 0.22], [-0.56, -0.54, -0.58], darkMetal);
-  box(internals, [0.02, 0.11, 0.13], [-0.51, -0.54, -0.58], rgbMaterial);
+  box(internals, [0.02, 0.11, 0.13], [-0.51, -0.54, -0.58], metal);
+  for (let i = 0; i < 4; i++) {
+    box(internals, [0.012, 0.12, 0.018], [-0.495, -0.54, -0.63 + i * 0.035], silver, { castShadow: false });
+  }
+  for (let i = 0; i < 4; i++) {
+    box(internals, [0.04, 0.08, 0.07], [-0.67, -0.63, 0.48 + i * 0.09], darkMetal);
+  }
 
   // PSU shroud and visible power-supply housing.
   box(internals, [0.68, 0.38, 0.72], [-0.24, -0.83, -0.52], darkMetal);
   box(internals, [0.03, 0.22, 0.38], [0.11, -0.83, -0.52], metal);
+  // PSU fan grille on the side facing the glass panel.
+  const psuFanRing = new THREE.Mesh(new THREE.TorusGeometry(0.135, 0.012, 6, 32), silver);
+  psuFanRing.rotation.y = Math.PI / 2;
+  psuFanRing.position.set(0.132, -0.83, -0.52);
+  internals.add(psuFanRing);
+  cylinder(internals, 0.112, 0.018, [0.13, -0.83, -0.52], darkMetal, "x", 32);
+  for (let i = 0; i < 9; i++) {
+    const angle = (i / 9) * Math.PI * 2;
+    box(internals, [0.012, 0.205, 0.009], [0.145, -0.83, -0.52], silver, { castShadow: false, rotation: [angle, 0, 0] });
+  }
+  cylinder(internals, 0.035, 0.02, [0.147, -0.83, -0.52], metal, "x", 20);
+  // PSU identification plate and modular output sockets.
+  box(internals, [0.012, 0.11, 0.23], [0.13, -0.83, -0.1], metal, { castShadow: false });
+  for (let row = 0; row < 2; row++) {
+    for (let col = 0; col < 3; col++) {
+      box(internals, [0.014, 0.045, 0.04], [0.145, -0.77 - row * 0.09, -0.23 + col * 0.07], darkMetal, { castShadow: false });
+    }
+  }
 
   // CPU air cooler and stacked heatsink fins.
   box(internals, [0.25, 0.52, 0.52], [-0.15, 0.32, -0.22], metal);
@@ -604,18 +653,38 @@ function buildGPU() {
     fan.scale.setScalar(0.9);
   }
 
-  // Decorative model stripe and illuminated accent.
+  // Layered shroud rails and a restrained light strip.
+  box(gpuGroup, [width * 0.92, 0.035, 1.2], [-0.02, 0.245, 0.02], darkMetal);
+  box(gpuGroup, [width * 0.86, 0.025, 1.13], [-0.02, 0.267, 0.02], gpuMaterial);
   box(
     gpuGroup,
-    [0.018, 0.055, 0.8],
+    [0.018, 0.035, 0.8],
     [width / 2 + 0.014, -0.16, 0.02],
     rgbMaterial,
     { castShadow: false }
   );
 
-  // PCIe connector and slot bracket.
+  // Visible fasteners around the cooler and backplate.
+  for (const z of [-0.52, 0.52]) {
+    for (const x of [-width * 0.38, width * 0.38]) {
+      cylinder(gpuGroup, 0.018, 0.018, [x, 0.075, z], silver, "y", 12);
+    }
+  }
+
+  // PCIe connector with individual gold contacts and the I/O bracket.
   box(gpuGroup, [0.15, 0.045, 0.88], [-width / 2 - 0.08, -0.35, 0.02], silver);
+  for (let i = 0; i < 18; i++) {
+    box(gpuGroup, [0.008, 0.012, 0.027], [-width / 2 - 0.08 + i * 0.008, -0.378, 0.02], material(0xc5a45a, 0.78, 0.24), { castShadow: false });
+  }
   box(gpuGroup, [0.035, 0.27, 0.42], [width / 2 + 0.03, -0.16, -0.38], metal);
+  for (let i = 0; i < 5; i++) {
+    box(gpuGroup, [0.012, 0.018, 0.045], [width / 2 + 0.05, -0.22 + i * 0.045, -0.38], darkMetal, { castShadow: false });
+  }
+  // Power connector block and separated socket openings.
+  box(gpuGroup, [0.12, 0.11, 0.22], [width * 0.24, 0.12, -0.48], darkMetal);
+  for (let i = 0; i < 4; i++) {
+    box(gpuGroup, [0.012, 0.035, 0.03], [width * 0.24 + 0.067, 0.12, -0.55 + i * 0.045], silver, { castShadow: false });
+  }
 
   gpuGroup.position.set(-0.03, -0.1, 0.03);
 }
