@@ -75,9 +75,17 @@ assert.match(appSource, /setMeshoptDecoder/, "Compressed GLB decoding must be co
 assert.ok(fs.existsSync(path.join(root, "assets/models/gpu.glb")), "GPU GLB asset is missing");
 assert.ok(fs.existsSync(path.join(root, "assets/models/cpu.glb")), "CPU GLB asset is missing");
 assert.ok(fs.existsSync(path.join(root, "assets/models/psu.glb")), "PSU GLB asset is missing");
+assert.ok(fs.existsSync(path.join(root, "assets/models/motherboard.glb")), "Motherboard GLB asset is missing");
+assert.ok(fs.existsSync(path.join(root, "assets/models/cooler.glb")), "Cooler GLB asset is missing");
+assert.ok(fs.existsSync(path.join(root, "assets/models/ram.glb")), "RAM GLB asset is missing");
+assert.ok(fs.existsSync(path.join(root, "assets/models/storage.glb")), "Storage GLB asset is missing");
+assert.match(appSource, /realisticMotherboardAsset/, "Motherboard GLB must be used when available");
+assert.match(appSource, /realisticCoolerAsset/, "AIO cooler GLB must be used when available");
+assert.match(appSource, /anchorOffset: \[0\.517, -0\.589, -0\.529\]/, "Cooler pump must be anchored to the CPU mount");
+assert.match(appSource, /Object_78/, "PSU model must hide its known stray mesh node");
 assert.ok(fs.existsSync(path.join(root, "vendor/MESHOPT-LICENSE.txt")), "Meshopt decoder license notice is missing");
 assert.match(read("assets/models/README.md"), /CC BY 4\.0/, "3D asset attribution must record its license");
-assert.match(index, /model-attribution/, "The third-party GPU model must be credited on the site");
+assert.match(index, /model-attribution/, "Third-party 3D assets must be credited on the site");
 assert.match(appSource, /Object\.assign\(selected, restored\)/, "Restoring a build must apply all selected parts");
 assert.match(workspaceSource, /schemaVersion:2/, "New snapshots must use schema version 2");
 assert.match(workspaceSource, /selectionIds:window\.RigCraft3D\?\.getSelectedPartIds\(\)/, "Snapshots must save stable part IDs");
