@@ -86,6 +86,22 @@
           <p id="part-results-count" class="selection-results" aria-live="polite">Loading components…</p>
         </div>
         <div id="dynamic-btn-group" class="hardware-options" aria-live="polite"></div>
+
+        <section id="component-inspector" class="config-card component-inspector" aria-labelledby="inspector-heading">
+          <div class="section-heading"><h2 id="inspector-heading">Component detail view</h2><span class="small-tag">3D INSPECT</span></div>
+          <p class="inspector-intro">A close-up of the component you are selecting. Drag to rotate, scroll or pinch to zoom.</p>
+          <div class="inspector-stage">
+            <canvas id="component-detail-canvas" aria-label="Interactive isolated component 3D preview"></canvas>
+            <span id="inspector-fidelity" class="inspector-fidelity">Preparing model…</span>
+            <button id="inspector-reset" class="inspector-reset" type="button">Reset view</button>
+          </div>
+          <div class="inspector-caption">
+            <p id="inspector-category" class="inspector-kicker">SELECTED PART</p>
+            <h3 id="inspector-name">Loading selected component…</h3>
+            <p id="inspector-specs" class="inspector-specs" aria-live="polite"></p>
+            <p id="inspector-disclaimer" class="inspector-disclaimer">Model fidelity varies by component. This is not manufacturer CAD.</p>
+          </div>
+        </section>
         <p id="part-empty-state" class="selection-empty" hidden>No matching components. Try a shorter search or turn off the FAIL filter.</p>
       </section>
 
@@ -155,5 +171,6 @@
   <script src="app.js"></script>
   <script src="js/workspace.js"></script>
   <script src="js/selection-tools.js"></script>
+  <script src="js/component-inspector.js"></script>
 </body>
 </html>
