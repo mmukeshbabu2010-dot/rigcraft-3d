@@ -35,10 +35,17 @@
   function box(parent, size, pos, mat) { const m = new THREE.Mesh(new THREE.BoxGeometry(...size), mat); m.position.set(...pos); parent.add(m); return m; }
   function resetRoot() { while (orbit.children.length) { const o=orbit.children[0]; orbit.remove(o); o.traverse(n=>{if(n.geometry)n.geometry.dispose();}); } }
   function addFan(parent, center, radius) {
-    const disk = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, .045, 32), materials.fan); disk.rotation.x=Math.PI/2; disk.position.set(...center); parent.add(disk);
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(radius*.88, radius*.045, 8, 32), materials.metal); ring.position.copy(disk.position); parent.add(ring);
-    for(let i=0;i<7;i++){const a=i*Math.PI*2/7; const blade=box(parent,[radius*.23,.018,radius*.78],[center[0]+Math.cos(a)*radius*.25,center[1]+.028,center[2]+Math.sin(a)*radius*.25],materials.metal);blade.rotation.y=-a*.7;}
-    const hub=new THREE.Mesh(new THREE.CylinderGeometry(radius*.19,radius*.19,.06,20),materials.accent);hub.rotation.x=Math.PI/2;hub.position.set(center[0],center[1]+.045,center[2]);parent.add(hub);
+    const rotor=new THREE.Group();rotor.position.set(center[0],center[1],center[2]);parent.add(rotor);
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(radius*.94,radius*.055,10,48),materials.metal);ring.rotation.x=-Math.PI/2;rotor.add(ring);
+    const inner=new THREE.Mesh(new THREE.TorusGeometry(radius*.78,radius*.018,8,40),materials.dark);inner.rotation.x=-Math.PI/2;inner.position.y=.012;rotor.add(inner);
+    for(let i=0;i<7;i++){
+      const s=new THREE.Shape();s.moveTo(.035,-.018);s.bezierCurveTo(.075,-.055,radius*.7,-.035,radius*.82,.012);s.bezierCurveTo(radius*.62,.045,.19,.055,.075,.025);s.bezierCurveTo(.052,.018,.04,.005,.035,-.018);
+      const blade=new THREE.Mesh(new THREE.ShapeGeometry(s,12),materials.metal);blade.rotation.x=-Math.PI/2;blade.rotation.z=i*Math.PI*2/7;blade.position.y=.018;rotor.add(blade);
+    }
+    const hub=new THREE.Mesh(new THREE.CylinderGeometry(radius*.2,radius*.2,.055,32),materials.dark);hub.position.y=.025;rotor.add(hub);
+    const badge=new THREE.Mesh(new THREE.CylinderGeometry(radius*.115,radius*.115,.06,32),materials.accent);badge.position.y=.045;rotor.add(badge);
+    for(let i=0;i<4;i++){const a=Math.PI/4+i*Math.PI/2;const screw=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,.012,12),materials.metal);screw.position.set(Math.cos(a)*radius*.84,.018,Math.sin(a)*radius*.84);rotor.add(screw);}
+    return rotor;
   }
   function buildCase() {
     const compact=partData.id==="compact-itx", w=compact?1.1:1.6, h=compact?1.5:2.1, d=compact?1.25:1.75;
@@ -54,15 +61,27 @@
   }
   function buildGpu() {
     const len=Math.max(180,Math.min(Number(partData.length_mm)||280,420))/300;
-    const width=Number(partData.size_x)||.8;
-    const fam=partData.id||""; const dual=["rtx4070","rx7800xt"].includes(fam); const count=dual?2:3;
+    const width=Math.max(.68,Math.min(Number(partData.size_x)||.82,1.1));
+    const id=partData.id||"",fanCount=id==="rtx4070"?2:3,bodyLength=1.18*len;
     const g=new THREE.Group();orbit.add(g);
-    box(g,[width,.32,1.14*len],[0,0,0],materials.shell);
-    box(g,[width+.02,.026,1.1*len],[0,.18,0],materials.metal);
-    box(g,[width*.92,.035,1.08*len],[0,.2,0],materials.dark);
-    for(let i=0;i<count;i++)addFan(g,[-width*.08,.24,(i-(count-1)/2)*.32*len],dual?.17:.145);
-    box(g,[.1,.12,.65*len],[width/2+.04,-.03,0],materials.metal);
-    box(g,[.14,.04,.8*len],[-width/2-.03,-.2,0],materials.metal);
+    box(g,[width,.31,bodyLength],[0,.015,0],materials.shell);
+    box(g,[width*.96,.035,bodyLength*.97],[0,.18,0],materials.dark);
+    box(g,[width*1.015,.025,bodyLength*.98],[0,.205,0],materials.metal);
+    for(let i=0;i<fanCount;i++){const z=(i-(fanCount-1)/2)*(bodyLength/(fanCount+.2));addFan(g,[0,.232,z],fanCount===2?.19:.155);}
+    // Individual heatsink fins are visible along both long edges.
+    for(let i=0;i<24;i++){const z=-bodyLength*.47+i*(bodyLength*.94/23);box(g,[.055,.22,.018],[width*.49,-.015,z],materials.metal);box(g,[.055,.22,.018],[-width*.49,-.015,z],materials.metal);}
+    // Backplate, support rails, power connector and PCIe contacts.
+    box(g,[width*.94,.025,bodyLength*.94],[0,-.17,0],materials.metal);
+    box(g,[width*.72,.012,bodyLength*.72],[0,-.19,0],materials.shell);
+    box(g,[.035,.025,bodyLength*.76],[width*.34,-.17,0],materials.accent);
+    box(g,[.12,.13,bodyLength*.72],[width/2+.055,-.035,0],materials.metal);
+    box(g,[.16,.42,.12],[-width/2-.045,-.02,bodyLength*.36],materials.metal);
+    for(let i=0;i<8;i++)box(g,[.012,.028,.07],[-width/2-.052,-.12+i*.032,bodyLength*.36],materials.dark);
+    box(g,[.13,.035,bodyLength*.66],[0,-.205,-bodyLength*.02],materials.metal);
+    const gold=new THREE.MeshStandardMaterial({color:0xc8a45d,metalness:.82,roughness:.22});
+    for(let i=0;i<16;i++)box(g,[.006,.012,.026],[-.058+i*.007,-.228,-bodyLength*.02],gold);
+    box(g,[.2,.12,.16],[width*.26,.01,-bodyLength*.43],materials.dark);
+    for(let i=0;i<4;i++)box(g,[.028,.045,.035],[width*.18+i*.055,.025,-bodyLength*.43],materials.metal);
   }
   function buildBoard() {
     const g=new THREE.Group();orbit.add(g);
@@ -129,7 +148,10 @@
   }
   function resize() { const r=canvas.getBoundingClientRect();const w=Math.max(1,Math.floor(r.width)),h=Math.max(1,Math.floor(r.height));renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.25));renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix(); }
   if(typeof ResizeObserver!=="undefined"){resizeObserver=new ResizeObserver(resize);resizeObserver.observe(canvas);}else window.addEventListener("resize",resize);resize();
-  $("inspector-reset").addEventListener("click",()=>{camera.position.set(2.55,1.65,3.3);if(controls){controls.target.set(0,0,0);controls.update();}});
+  const cameraViews={front:[0,0,4.4],side:[4.4,0,0],top:[0,4.4,.01],rear:[0,0,-4.4],"three-quarter":[2.55,1.65,3.3]};
+  function setInspectorView(name){const p=cameraViews[name]||cameraViews["three-quarter"];camera.position.set(p[0],p[1],p[2]);if(controls){controls.target.set(0,0,0);controls.update();}document.querySelectorAll("[data-inspector-view]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.inspectorView===name)));}
+  $("inspector-reset").addEventListener("click",()=>setInspectorView("three-quarter"));
+  document.querySelectorAll("[data-inspector-view]").forEach(b=>b.addEventListener("click",()=>setInspectorView(b.dataset.inspectorView)));
   const observer=new MutationObserver(()=>updateInspector());observer.observe($("dynamic-btn-group"),{childList:true,subtree:true,attributes:true,attributeFilter:["aria-pressed"]});
   document.querySelectorAll(".tab-btn").forEach(b=>b.addEventListener("click",()=>requestAnimationFrame(updateInspector)));
   fetch("parts.json").then(r=>{if(!r.ok)throw new Error("Catalogue unavailable");return r.json();}).then(catalog=>{partData.catalog=catalog;updateInspector();}).catch(()=>{$("inspector-name").textContent="Component preview unavailable";$ ("inspector-fidelity").textContent="Catalogue did not load";});
