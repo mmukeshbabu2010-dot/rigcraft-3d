@@ -39,8 +39,8 @@
     const ring=new THREE.Mesh(new THREE.TorusGeometry(radius*.94,radius*.055,10,48),materials.metal);ring.rotation.x=-Math.PI/2;rotor.add(ring);
     const inner=new THREE.Mesh(new THREE.TorusGeometry(radius*.78,radius*.018,8,40),materials.dark);inner.rotation.x=-Math.PI/2;inner.position.y=.012;rotor.add(inner);
     for(let i=0;i<7;i++){
-      const s=new THREE.Shape();s.moveTo(.035,-.018);s.bezierCurveTo(.075,-.055,radius*.7,-.035,radius*.82,.012);s.bezierCurveTo(radius*.62,.045,.19,.055,.075,.025);s.bezierCurveTo(.052,.018,.04,.005,.035,-.018);
-      const blade=new THREE.Mesh(new THREE.ShapeGeometry(s,12),materials.metal);blade.rotation.x=-Math.PI/2;blade.rotation.z=i*Math.PI*2/7;blade.position.y=.018;rotor.add(blade);
+      const s=new THREE.Shape();s.moveTo(radius*.18,-radius*.1);s.bezierCurveTo(radius*.38,-radius*.35,radius*.7,-radius*.22,radius*.82,radius*.06);s.bezierCurveTo(radius*.62,radius*.29,radius*.48,radius*.35,radius*.38,radius*.16);s.bezierCurveTo(radius*.27,radius*.12,radius*.2,radius*.03,radius*.18,-radius*.1);
+      const blade=new THREE.Mesh(new THREE.ShapeGeometry(s,12),materials.metal);blade.rotation.set(-Math.PI/2,i*Math.PI*2/7,0);blade.position.y=.018;rotor.add(blade);
     }
     const hub=new THREE.Mesh(new THREE.CylinderGeometry(radius*.2,radius*.2,.055,32),materials.dark);hub.position.y=.025;rotor.add(hub);
     const badge=new THREE.Mesh(new THREE.CylinderGeometry(radius*.115,radius*.115,.06,32),materials.accent);badge.position.y=.045;rotor.add(badge);
