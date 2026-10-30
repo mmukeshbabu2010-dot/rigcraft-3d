@@ -85,25 +85,60 @@
   }
   function buildBoard() {
     const g=new THREE.Group();orbit.add(g);
+    const form=partData.form_factor||"ATX",scale=form==="Mini-ITX"?.76:form==="Micro-ATX"?.88:1;
+    g.scale.setScalar(scale);
     box(g,[.12,1.65,1.85],[0,0,0],materials.pcb);
-    for(let i=0;i<4;i++)box(g,[.055,.09,1.05],[.09,.44-i*.22,-.2+i*.025],materials.shell);
-    box(g,[.15,.34,.36],[.1,.25,.25],materials.dark);
-    box(g,[.045,.23,.23],[.12,.25,.25],materials.metal);
-    for(let i=0;i<4;i++)box(g,[.03,.035,.06],[.085,-.45+i*.19,.55],materials.metal);
-    for(let i=0;i<5;i++)box(g,[.03,.09,.12],[.075,-.58+i*.16,-.72],materials.metal);
+    // CPU socket with independent retention frame and latch.
+    box(g,[.16,.43,.43],[.1,.2,.18],materials.metal);
+    box(g,[.17,.34,.34],[.12,.23,.18],materials.dark);
+    box(g,[.025,.37,.025],[.215,.22,.18],materials.metal);
+    box(g,[.018,.28,.025],[-.015,.23,.18],materials.accent);
+    // Four DIMM slots with contrasting contact rails and end latches.
+    for(let i=0;i<4;i++){const z=-.63+i*.15;box(g,[.055,.07,1.08],[.09,.43,z],materials.dark);box(g,[.062,.018,1.0],[.12,.47,z],materials.metal);box(g,[.07,.11,.035],[.09,.43,z-.54],materials.shell);}
+    // VRM heatsinks with visible cooling fins.
+    for(const x of [-.02,.2]){box(g,[.12,.3,.36],[x,.48,-.62],materials.shell);for(let i=0;i<7;i++)box(g,[.13,.012,.34],[x,.64-i*.035,-.62],materials.metal);}
+    // Reinforced PCIe slots, M.2 cover and chipset heatsink.
+    for(let i=0;i<3;i++){const z=.48+i*.2;box(g,[.06,.075,1.02-i*.12],[.09,-.43,z],materials.dark);box(g,[.065,.012,.82-i*.12],[.13,-.38,z],materials.metal);}
+    box(g,[.09,.12,.62],[.08,-.08,-.08],materials.shell);
+    box(g,[.14,.17,.24],[.1,-.53,-.65],materials.metal);
+    // Capacitors and rear I/O block.
+    for(let i=0;i<12;i++){const cap=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.09,16),materials.metal);cap.position.set(-.4+(i%6)*.14,.02,-.72+Math.floor(i/6)*.18);g.add(cap);}
+    box(g,[.18,.42,.22],[-.02,.04,.91],materials.metal);
+    for(let i=0;i<5;i++)box(g,[.025,.12,.025],[-.03+i*.04,.08,1.035],materials.dark);
+    for(let i=0;i<8;i++)box(g,[.035,.035,.035],[-.48+(i%4)*.12,-.73+Math.floor(i/4)*.16,-.9],materials.metal);
   }
   function buildCpu() {
-    box(orbit,[.85,.14,.85],[0,0,0],materials.metal);
-    box(orbit,[.76,.06,.76],[0,.1,0],new THREE.MeshStandardMaterial({color:0x9ba8af,metalness:.78,roughness:.22}));
-    box(orbit,[.64,.018,.64],[0,.141,0],materials.shell);
+    const g=new THREE.Group();orbit.add(g);
+    box(g,[.92,.16,.92],[0,0,0],materials.dark);
+    box(g,[.86,.055,.86],[0,.105,0],materials.metal);
+    box(g,[.77,.025,.77],[0,.145,0],new THREE.MeshStandardMaterial({color:0xaeb9bf,metalness:.86,roughness:.2}));
+    box(g,[.7,.012,.7],[0,.164,0],materials.shell);
+    // Individual contact lands on the package underside.
+    for(let x=0;x<12;x++)for(let z=0;z<12;z++){const contact=new THREE.Mesh(new THREE.BoxGeometry(.025,.008,.025),materials.metal);contact.position.set(-.32+x*.058,-.088,-.32+z*.058);g.add(contact);}
+    // Product marking rendered as a texture rather than floating text geometry.
+    const labelCanvas=document.createElement("canvas");labelCanvas.width=512;labelCanvas.height=256;
+    const ctx=labelCanvas.getContext("2d");ctx.fillStyle="#17232b";ctx.fillRect(0,0,512,256);
+    ctx.fillStyle="#e6f0f4";ctx.font="bold 38px Arial";ctx.fillText(String(partData.name||"PROCESSOR").slice(0,24),22,112);
+    ctx.fillStyle="#66fcf1";ctx.font="22px Arial";ctx.fillText(String(partData.socket||"CPU").toUpperCase(),24,164);
+    const texture=new THREE.CanvasTexture(labelCanvas);texture.encoding=THREE.sRGBEncoding;
+    const label=new THREE.Mesh(new THREE.PlaneGeometry(.62,.31),new THREE.MeshBasicMaterial({map:texture}));
+    label.rotation.x=-Math.PI/2;label.position.y=.173;g.add(label);
   }
   function buildPsu() {
-    box(orbit,[1.55,.78,1.22],[0,0,0],materials.shell);
-    const grill=new THREE.Mesh(new THREE.TorusGeometry(.34,.022,8,40),materials.metal);grill.position.set(0,.405,0);orbit.add(grill);
-    const inner=new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,.03,32),materials.fan);inner.position.set(0,.4,0);orbit.add(inner);
-    for(let i=0;i<9;i++){const a=i*Math.PI*2/9;box(orbit,[.025,.015,.5],[Math.cos(a)*.15,.425,Math.sin(a)*.15],materials.metal).rotation.y=-a;}
-    box(orbit,[.48,.27,.035],[0,-.12,.625],materials.metal);
-    for(let i=0;i<6;i++)box(orbit,[.045,.045,.025],[-.18+(i%3)*.18,-.16+Math.floor(i/3)*.1,.65],materials.dark);
+    const g=new THREE.Group();orbit.add(g);
+    box(g,[1.62,.78,1.28],[0,0,0],materials.shell);
+    box(g,[1.55,.035,1.21],[0,.405,0],materials.metal);
+    const grille=new THREE.Mesh(new THREE.TorusGeometry(.38,.025,10,48),materials.dark);grille.rotation.x=-Math.PI/2;grille.position.y=.43;g.add(grille);
+    addFan(g,[0,.445,0],.33);
+    // Side ventilation perforations.
+    for(let i=0;i<8;i++)for(let j=0;j<3;j++){const vent=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,.012,12),materials.dark);vent.rotation.z=Math.PI/2;vent.position.set(.82,.18-j*.13,-.42+i*.12);g.add(vent);}
+    // Modular connector plate with individual sockets.
+    box(g,[.5,.3,.035],[0,-.12,.66],materials.metal);
+    for(let i=0;i<8;i++){const x=-.19+(i%4)*.125,y=-.08-Math.floor(i/4)*.12;box(g,[.07,.075,.025],[x,y,.69],materials.dark);box(g,[.035,.035,.012],[x,y,.71],materials.accent);}
+    // Rear honeycomb exhaust and IEC inlet.
+    box(g,[.55,.17,.025],[0,.22,-.66],materials.dark);
+    for(let i=0;i<10;i++)box(g,[.018,.1,.018],[-.22+i*.048,.22,-.68],materials.metal);
+    box(g,[.42,.12,.018],[0,-.29,-.66],materials.metal);
   }
   const assetMap={motherboards:"assets/models/motherboard.glb",cpus:"assets/models/cpu.glb",psus:"assets/models/psu.glb"};
   const fidelityText={cases:"Procedural case illustration",motherboards:"Reference motherboard mesh",cpus:"Reference CPU mesh",gpus:"GPU illustration",psus:"Reference PSU mesh"};
