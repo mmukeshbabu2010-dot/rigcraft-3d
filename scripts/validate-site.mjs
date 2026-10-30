@@ -135,6 +135,16 @@ for (const board of parts.motherboards) {
     `motherboards.${board.id}: no case lists support for ${formFactor}`);
 }
 
+assert.match(htmlFiles.map((file) => fs.readFileSync(path.join(root, file), "utf8")).join("\n"), /id="component-inspector"/, "Component detail inspector panel is missing");
+const inspectorPath = path.join(root, "js/component-inspector.js");
+assert.ok(fs.existsSync(inspectorPath), "Component inspector module is missing");
+const inspectorSource = fs.readFileSync(inspectorPath, "utf8");
+for (const marker of ["component-detail-canvas", "MutationObserver", "inspector-fidelity", "inspector-reset", "OrbitControls", "assets/models/"]) {
+  assert.ok(inspectorSource.includes(marker), `Component inspector is missing ${marker}`);
+}
+assert.match(fs.readFileSync(path.join(root, "style.css"), "utf8"), /\.inspector-stage/, "Component inspector styles are missing");
+assert.match(fs.readFileSync(path.join(root, "index.html"), "utf8"), /js\/component-inspector\.js/, "Component inspector script is not linked");
+
 assert.ok(fs.existsSync(path.join(root, "vendor/THREE-LICENSE.txt")), "Third-party license notice is missing");
 assert.ok(fs.existsSync(path.join(root, "vendor/README.md")), "Vendor provenance document is missing");
 console.log(`Static validation passed: ${htmlFiles.length} HTML pages, ${checkedLinks} local links/assets, and ${Object.values(parts).reduce((n, list) => n + list.length, 0)} catalogue entries.`);
