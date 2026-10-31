@@ -1250,6 +1250,11 @@ function updateSpecsAndCompatibility() {
   setSpec("selected-case", "Case", selected.cases?.name || "Not selected");
   setSpec("selected-motherboard", "Motherboard", selected.motherboards?.name || "Not selected");
   setSpec("selected-cpu", "CPU", selected.cpus?.name || "Not selected");
+  // These categories are shown explicitly so the build summary cannot imply that
+  // the current five-category catalogue is a complete PC parts list.
+  setSpec("selected-cooler", "CPU cooler", "Not selectable yet");
+  setSpec("selected-ram", "Memory (RAM)", "Not selectable yet");
+  setSpec("selected-storage", "Storage", "Not selectable yet");
   setSpec("selected-gpu", "GPU", selected.gpus?.name || "Not selected");
   setSpec("selected-psu", "PSU", selected.psus?.name || "Not selected");
 
