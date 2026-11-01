@@ -1,14 +1,14 @@
 
 :root {
   color-scheme: dark;
-  --bg: #0b0c10;
-  --panel: #171f29;
-  --card: #0f141b;
-  --text: #d9e2ec;
-  --muted: #91a1b2;
-  --accent: #66fcf1;
-  --accent-dark: #45a29e;
-  --border: rgba(102, 252, 241, 0.19);
+  --bg: #0b0f12;
+  --panel: #1a252d;
+  --card: #202e37;
+  --text: #e5edf1;
+  --muted: #a5b4bf;
+  --accent: #62e6d4;
+  --accent-dark: #2b9c92;
+  --border: rgba(165, 180, 191, 0.18);
   --radius: 12px;
 }
 
@@ -714,3 +714,60 @@ button.primary-action span { font-size: 1.1rem; }
 .inspector-camera-presets button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:rgba(9,28,31,.94)}
 .inspector-camera-presets button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media(max-width:420px){.inspector-camera-presets{gap:3px}.inspector-camera-presets button{padding:5px 6px;font-size:.59rem}}
+
+
+/* RigCraft 3D — 60 / 30 / 10 design system.
+   60% graphite canvas, 30% slate surfaces, 10% teal interaction accents. */
+:root {
+  color-scheme: dark;
+  --bg: #0b0f12;
+  --panel: #1a252d;
+  --card: #202e37;
+  --surface-raised: #263640;
+  --surface-inset: #111a20;
+  --text: #e5edf1;
+  --muted: #a5b4bf;
+  --accent: #62e6d4;
+  --accent-dark: #2b9c92;
+  --border: rgba(165, 180, 191, 0.18);
+  --focus-ring: #8af3e5;
+  --radius: 12px;
+}
+
+html, body { background: var(--bg); color: var(--text); }
+#viewport { background: radial-gradient(ellipse at 50% 45%, #1b2a32 0%, var(--bg) 70%); }
+#ui-sidebar { background: var(--panel); border-left-color: var(--border); }
+.config-card, .component-inspector { background: var(--card); border-color: var(--border); }
+.build-overview { background: linear-gradient(145deg, #263640 0%, #1a252d 82%); border-color: rgba(98,230,212,.28); }
+.build-overview h2, #spec-summary strong, .build-flow-list strong { color: var(--text); }
+.build-flow, #disclaimer { background: var(--surface-inset); border-color: var(--border); }
+.tab-menu { background: #111a20; }
+button { background: var(--surface-raised); border-color: rgba(98,230,212,.36); color: var(--text); }
+button:hover { background: #30434d; border-color: var(--accent); color: var(--accent); }
+button.active, button[aria-pressed="true"] { background: var(--accent); color: #08201e; border-color: var(--accent); }
+button.primary-action { background: var(--accent); color: #08201e; border-color: var(--accent); }
+button.primary-action:hover { background: #83f0e2; color: #071a19; }
+.tab-btn { background: transparent; color: var(--muted); }
+.tab-btn.active, .tab-btn[aria-pressed="true"] { background: var(--accent); color: #08201e; }
+.hardware-options button { background: var(--surface-raised); }
+.hardware-options button.active { background: var(--accent); color: #08201e; }
+.hardware-options button.active .option-meta { color: #24413e; }
+.brand-mark { background: var(--surface-inset); border-color: var(--accent-dark); color: var(--accent); box-shadow: inset 0 0 20px rgba(98,230,212,.08); }
+.sidebar-header h1, .section-heading h2, .build-flow-heading .eyebrow, .inspector-kicker { color: var(--accent); }
+.sidebar-header h1 span { color: var(--text); }
+.viewport-label, .viewport-model-note { background: rgba(11,15,18,.84); border-color: var(--border); }
+.camera-controls button, .inspector-reset { background: rgba(17,26,32,.94); color: var(--text); }
+#compat-status { background: rgba(32,46,55,.55); border-color: var(--border); }
+#disclaimer p, .flow-disclaimer, .site-footer, .model-attribution { color: var(--muted); }
+.model-attribution a, .quick-links a { color: #c7d4dc; }
+.quick-links a:hover, .quick-links a:focus-visible { color: var(--accent); }
+.inspector-stage { border-color: var(--border); background: radial-gradient(ellipse at 50% 46%, #263640 0%, #172229 62%, var(--bg) 100%); }
+.inspector-fidelity { background: rgba(11,15,18,.9); color: var(--text); border-color: var(--border); }
+.inspector-spec { border-color: var(--border); background: rgba(255,255,255,.035); color: var(--text); }
+.inspector-camera-presets button { background: rgba(11,15,18,.92); border-color: #465963; color: var(--text); }
+.inspector-camera-presets button[aria-pressed="true"] { background: rgba(18,57,54,.96); border-color: var(--accent); color: var(--accent); }
+.workspace-actions select, .workspace-actions input { background: var(--surface-inset); border-color: var(--border); color: var(--text); }
+.workspace-actions button { background: var(--accent); color: #08201e; border-color: var(--accent); }
+:where(button, input, select, textarea, a, canvas):focus-visible { outline-color: var(--focus-ring); }
+::selection { background: rgba(98,230,212,.28); color: var(--text); }
+@media (prefers-reduced-motion: reduce) { button:hover { transform: none; } }

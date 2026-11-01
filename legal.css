@@ -27,7 +27,7 @@ a {
 a:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid #ffffff;
+  outline: 2px solid var(--focus-ring);
   outline-offset: 3px;
 }
 
@@ -123,7 +123,7 @@ textarea:focus-visible {
 
 .legal-content p,
 .legal-content li {
-  color: #c2ccd5;
+  color: var(--text);
   font-size: 0.98rem;
   line-height: 1.75;
 }
