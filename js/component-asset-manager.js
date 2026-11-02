@@ -17,7 +17,9 @@
     function clone(source) {
       const result = THREE.SkeletonUtils && THREE.SkeletonUtils.clone ? THREE.SkeletonUtils.clone(source) : source.clone(true);
       result.traverse((node) => {
-        if (!node.isMesh || !node.material) return;
+        if (!node.isMesh) return;
+        if (node.geometry) { node.geometry = node.geometry.clone(); node.geometry.userData = Object.assign({}, node.geometry.userData, { rigcraftOwnedGeometry: true }); }
+        if (!node.material) return;
         const copy = (mat) => { const cloned = mat.clone(); cloned.userData = Object.assign({}, cloned.userData, { rigcraftOwnedMaterial: true }); return cloned; };
         node.material = Array.isArray(node.material) ? node.material.map(copy) : copy(node.material);
       });
@@ -54,7 +56,7 @@
     function dispose(model) {
       if (!model) return;
       model.traverse((node) => {
-        if (node.geometry) node.geometry.dispose();
+        if (node.geometry && node.geometry.userData && node.geometry.userData.rigcraftOwnedGeometry) node.geometry.dispose();
         if (!node.material) return;
         const mats = Array.isArray(node.material) ? node.material : [node.material];
         mats.forEach((mat) => { if (mat.userData && mat.userData.rigcraftOwnedMaterial) mat.dispose(); });

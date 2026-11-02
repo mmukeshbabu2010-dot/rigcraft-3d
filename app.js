@@ -173,7 +173,7 @@ function clearGroup(group) {
     group.remove(child);
 
     child.traverse((object) => {
-      if (object.geometry) object.geometry.dispose();
+      if (object.geometry && object.geometry.userData && object.geometry.userData.rigcraftOwnedGeometry) object.geometry.dispose();
       if (object.material) {
         const mats = Array.isArray(object.material) ? object.material : [object.material];
         mats.forEach((mat) => {
@@ -221,6 +221,7 @@ let realisticMotherboardAsset = null;
 let realisticCoolerAsset = null;
 let realisticRamAsset = null;
 let realisticStorageAsset = null;
+let componentAssetManager = null;
 let realisticCoolerAnimations = [];
 let gpuMixer = null;
 let gpuFanAction = null;
@@ -228,9 +229,9 @@ let gpuFanAction = null;
 function loadRealisticModels() {
   if (!THREE.GLTFLoader || !window.MeshoptDecoder) return;
 
-  const assetManager = window.RigCraftAssetManager.create(THREE, { meshoptDecoder: window.MeshoptDecoder });
+  componentAssetManager = window.RigCraftAssetManager.create(THREE, { meshoptDecoder: window.MeshoptDecoder });
   const load = (url, onLoaded, label) => {
-    assetManager.load(url).then((gltf) => {
+    componentAssetManager.load(url).then((gltf) => {
       onLoaded(gltf);
       if (hardwareLoaded) rebuildScene();
     }).catch((error) => console.warn(
@@ -867,7 +868,7 @@ function buildGPU() {
   clearGroup(gpuGroup);
   gpuMixer = null;
   gpuFanAction = null;
-  const model = THREE.SkeletonUtils ? THREE.SkeletonUtils.clone(realisticGpuAsset) : realisticGpuAsset.clone(true);
+  const model = componentAssetManager ? componentAssetManager.clone(realisticGpuAsset) : window.RigCraftAssetManager.create(THREE).clone(realisticGpuAsset);
   model.rotation.x = Math.PI / 2;
   model.updateMatrixWorld(true);
   const initialBounds = new THREE.Box3().setFromObject(model);
