@@ -73,7 +73,7 @@ assert.match(appSource, /Socket latch and retention arm/, "Motherboard model mus
 assert.match(appSource, /function buildGPUProcedural\(\)/, "GPU must retain a procedural fallback if the GLB cannot load");
 assert.match(appSource, /const fanCount = isCompact \|\| isAmdMidrange \? 2 : 3/, "GPU families must use different cooler layouts");
 assert.match(appSource, /card\.scale\.z = lengthScale/, "GPU length must follow the selected catalogue part");
-assert.match(appSource, /selected\.gpus\?\.id !== "rtx4090"/, "The single reference GLB must not be reused for every GPU SKU");
+assert.match(appSource, /selected\.gpus\?\.id !== "rtx3080"/, "The RTX 3080 reference GLB must only be used for the matching GPU SKU");
 assert.match(appSource, /Front intake pattern/, "Case variants must have differentiated front-panel ventilation");
 assert.match(appSource, /const caseId = selected\.cases\?\.id/, "Case visuals must respond to the selected case");
 const assetManagerSource = read("js/component-asset-manager.js");
