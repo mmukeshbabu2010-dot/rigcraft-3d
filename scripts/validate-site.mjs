@@ -75,7 +75,8 @@ assert.match(appSource, /card\.scale\.z = lengthScale/, "GPU length must follow 
 assert.match(appSource, /selected\.gpus\?\.id !== "rtx4090"/, "The single reference GLB must not be reused for every GPU SKU");
 assert.match(appSource, /Front intake pattern/, "Case variants must have differentiated front-panel ventilation");
 assert.match(appSource, /const caseId = selected\.cases\?\.id/, "Case visuals must respond to the selected case");
-assert.match(appSource, /new THREE\.GLTFLoader\(\)/, "GPU must load its detailed GLB mesh");
+const assetManagerSource = read("js/component-asset-manager.js");
+assert.match(assetManagerSource, /new THREE\.GLTFLoader\(\)/, "GPU asset manager must construct the detailed GLB loader");
 assert.match(appSource, /setMeshoptDecoder/, "Compressed GLB decoding must be configured");
 assert.ok(fs.existsSync(path.join(root, "assets/models/gpu.glb")), "GPU GLB asset is missing");
 assert.ok(fs.existsSync(path.join(root, "assets/models/cpu.glb")), "CPU GLB asset is missing");
