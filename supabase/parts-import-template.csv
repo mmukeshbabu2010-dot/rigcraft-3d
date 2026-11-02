@@ -1,0 +1,2 @@
+id,category_id,manufacturer,model,display_name,specs_json,image_url,product_url,source_name,source_url,source_checked_at,data_status
+example-cpu-model,cpus,ExampleCo,Example 8-Core,ExampleCo Example 8-Core,"{\"socket\":\"AM5\",\"tdp_watts\":105}",,,,Example public spec page,https://example.com/specs,2026-11-02,unverified

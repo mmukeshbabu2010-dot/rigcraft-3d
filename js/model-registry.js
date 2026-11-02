@@ -1,0 +1,4 @@
+(function(){ "use strict";
+const records={case:{variant:"case_mid_tower",source:"procedural",asset:null,unit:"mm"},gpu:{variants:["gpu_dual_fan","gpu_triple_fan"],source:"procedural",asset:null,unit:"mm"},motherboard:{variants:["motherboard_atx","motherboard_matx","motherboard_itx"],source:"procedural",asset:null,unit:"mm"},ram:{variants:["ram_standard","ram_rgb"],source:"procedural",asset:null,unit:"mm"},cooler:{variants:["cooler_air","cooler_aio"],source:"procedural",asset:null,unit:"mm"},psu:{variant:"psu_standard",source:"procedural",asset:null,unit:"mm"},storage:{variants:["ssd_m2","ssd_25"],source:"procedural",asset:null,unit:"mm"},fan:{variant:"fan_standard",source:"procedural",asset:null,unit:"mm"}};
+window.RigCraftModelRegistry=Object.freeze({get:k=>records[k]||null,list:()=>Object.keys(records)});
+})();

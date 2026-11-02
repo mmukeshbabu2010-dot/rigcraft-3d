@@ -173,7 +173,13 @@ function clearGroup(group) {
     group.remove(child);
 
     child.traverse((object) => {
-      if (object.geometry) object.geometry.dispose();
+      if (object.geometry && object.geometry.userData && object.geometry.userData.rigcraftOwnedGeometry) object.geometry.dispose();
+      if (object.material) {
+        const mats = Array.isArray(object.material) ? object.material : [object.material];
+        mats.forEach((mat) => {
+          if (mat.userData && mat.userData.rigcraftOwnedMaterial) mat.dispose();
+        });
+      }
     });
   }
 }
@@ -215,6 +221,7 @@ let realisticMotherboardAsset = null;
 let realisticCoolerAsset = null;
 let realisticRamAsset = null;
 let realisticStorageAsset = null;
+let componentAssetManager = null;
 let realisticCoolerAnimations = [];
 let gpuMixer = null;
 let gpuFanAction = null;
@@ -222,18 +229,14 @@ let gpuFanAction = null;
 function loadRealisticModels() {
   if (!THREE.GLTFLoader || !window.MeshoptDecoder) return;
 
-  const loader = new THREE.GLTFLoader();
-  loader.setMeshoptDecoder(window.MeshoptDecoder);
+  componentAssetManager = window.RigCraftAssetManager.create(THREE, { meshoptDecoder: window.MeshoptDecoder });
   const load = (url, onLoaded, label) => {
-    loader.load(
-      url,
-      (gltf) => {
-        onLoaded(gltf);
-        if (hardwareLoaded) rebuildScene();
-      },
-      undefined,
-      (error) => console.warn("RigCraft 3D: using the procedural " + label + " fallback because its model could not be loaded.", error)
-    );
+    componentAssetManager.load(url).then((gltf) => {
+      onLoaded(gltf);
+      if (hardwareLoaded) rebuildScene();
+    }).catch((error) => console.warn(
+      "RigCraft 3D: using the procedural " + label + " fallback because its model could not be loaded.", error
+    ));
   };
 
   load("assets/models/gpu.glb", (gltf) => {
@@ -519,9 +522,8 @@ function buildChassis() {
 
 /* Fit an attributed GLB to a known scene-space box. */
 function addFittedAsset(parent, asset, rotation, targetSize, targetPosition, options = {}) {
-  const model = THREE.SkeletonUtils
-    ? THREE.SkeletonUtils.clone(asset)
-    : asset.clone(true);
+  const modelManager = window.RigCraftAssetManager.create(THREE);
+  const model = modelManager.clone(asset);
   model.rotation.set(...rotation);
 
   // Scale the parent group in world axes after the model has been reoriented.
@@ -866,7 +868,7 @@ function buildGPU() {
   clearGroup(gpuGroup);
   gpuMixer = null;
   gpuFanAction = null;
-  const model = THREE.SkeletonUtils ? THREE.SkeletonUtils.clone(realisticGpuAsset) : realisticGpuAsset.clone(true);
+  const model = componentAssetManager ? componentAssetManager.clone(realisticGpuAsset) : window.RigCraftAssetManager.create(THREE).clone(realisticGpuAsset);
   model.rotation.x = Math.PI / 2;
   model.updateMatrixWorld(true);
   const initialBounds = new THREE.Box3().setFromObject(model);
