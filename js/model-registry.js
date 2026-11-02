@@ -1,7 +1,7 @@
 (function(){ "use strict";
 const records={
   case:{variant:"case_mid_tower",source:"procedural",asset:null,unit:"mm"},
-  gpu:{variants:["gpu_dual_fan","gpu_triple_fan"],source:"glb-reference",asset:"assets/models/gpu.glb",model:"GeForce RTX 3080 reference",license:"CC BY 4.0",unit:"mm"},
+  gpu:{variants:["gpu_dual_fan","gpu_triple_fan"],source:"glb-reference",asset:"assets/models/gpu.glb",model:"GeForce RTX 3080 reference",compatibleProductIds:["rtx3080"],license:"CC BY 4.0",unit:"mm"},
   motherboard:{variants:["motherboard_atx","motherboard_matx","motherboard_itx"],source:"glb-reference",asset:"assets/models/motherboard.glb",model:"ASUS Strix B550-F reference",license:"CC BY 4.0",unit:"mm"},
   cpu:{variant:"cpu_standard",source:"glb-reference",asset:"assets/models/cpu.glb",model:"generic desktop CPU reference",license:"CC BY 4.0",unit:"mm"},
   ram:{variants:["ram_standard","ram_rgb"],source:"glb-reference",asset:"assets/models/ram.glb",model:"Corsair Vengeance RGB Pro reference",license:"CC BY 4.0",unit:"mm"},

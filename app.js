@@ -863,10 +863,10 @@ function buildGPUProcedural() {
 }
 
 function buildGPU() {
-  // The bundled GPU mesh is an RTX 3080 reference model, not an exact-SKU
-  // library. It is shown as an illustrative reference until matching SKU
-  // geometry is available; product specs remain sourced from the catalogue.
-  if (!realisticGpuAsset) {
+  // This bundled mesh represents an RTX 3080 reference only. Never display it
+  // as a different GPU SKU; other selections retain the procedural fallback
+  // until an appropriately licensed matching model is added.
+  if (!realisticGpuAsset || selected.gpus?.id !== "rtx3080") {
     gpuMixer = null;
     gpuFanAction = null;
     buildGPUProcedural();
