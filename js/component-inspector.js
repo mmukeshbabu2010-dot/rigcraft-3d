@@ -141,7 +141,7 @@
     box(g,[.42,.12,.018],[0,-.29,-.66],materials.metal);
   }
   const assetMap={motherboards:"assets/models/motherboard.glb",cpus:"assets/models/cpu.glb",psus:"assets/models/psu.glb"};
-  const fidelityText={cases:"Procedural case illustration",motherboards:"Reference motherboard mesh",cpus:"Reference CPU mesh",gpus:"GPU illustration",psus:"Reference PSU mesh"};
+  const fidelityText={cases:"Procedural case illustration",motherboards:"Reference motherboard mesh",cpus:"Reference CPU mesh",gpus:"Procedural GPU model",psus:"Reference PSU mesh"};
   function fitModel(model) {
     model.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(model);const size=bounds.getSize(new THREE.Vector3());const center=bounds.getCenter(new THREE.Vector3());
     model.position.sub(center);const span=Math.max(size.x,size.y,size.z)||1;model.scale.multiplyScalar(1.6/span);model.updateMatrixWorld(true);orbit.add(model);
@@ -158,7 +158,7 @@
     const label=chosen?.querySelector("span")?.textContent?.trim()||"Choose a component";
     const data=(partData.catalog||{})[category]?.find(p=>p.name===label)||(partData.catalog||{})[category]?.[0];
     if(!data)return;
-    const key=category+":"+data.id;if(key===currentKey)return;currentKey=key;partData.selected=data;partData.category=category;
+    const key=category+":"+data.id;if(key===currentKey)return;currentKey=key;partData.selected=data;partData.category=category;Object.assign(partData,data,{category});
     $("inspector-category").textContent=(activeTab?.textContent||category).toUpperCase()+" · FOCUSED VIEW";
     $("inspector-name").textContent=data.name;
     const factRow=$("inspector-specs");factRow.replaceChildren();
@@ -171,9 +171,9 @@
     facts.filter(Boolean).forEach(f=>factRow.appendChild(makeFact(f)));
     resetRoot();
     $("inspector-fidelity").textContent=fidelityText[category]||"Illustrative model";
-    $("inspector-disclaimer").textContent=category==="motherboards"?"Reference board mesh is not an exact rendering of every selected model. Listed specs come from the prototype catalogue.":category==="cpus"||category==="psus"?"Reference mesh is a visual example, not a SKU-specific rendering. Dimensions and details may differ.":category==="gpus"?"Only the bundled reference GPU mesh is used for its designated selection. Other cards are family-level illustrations.":"Case is a procedural visual study, not exact manufacturer CAD. Fit limits are illustrative.";
+    $("inspector-disclaimer").textContent=category==="motherboards"?"Reference board mesh is not an exact rendering of every selected model. Listed specs come from the prototype catalogue.":category==="cpus"||category==="psus"?"Reference mesh is a visual example, not a SKU-specific rendering. Dimensions and details may differ.":category==="gpus"?"GPU preview is generated from the selected card dimensions and fan layout; it is not manufacturer CAD.":"Case is a procedural visual study, not exact manufacturer CAD. Fit limits are illustrative.";
     const asset=assetMap[category]||null;
-    const useBundledGpu=category==="gpus"&&data.id==="rtx4090";
+    const useBundledGpu=false;
     if(useBundledGpu){loader.load("assets/models/gpu.glb",g=>{if(key!==currentKey)return;resetRoot();const model=THREE.SkeletonUtils?THREE.SkeletonUtils.clone(g.scene):g.scene.clone(true);fitModel(model);$("inspector-fidelity").textContent="Reference GPU mesh · SKU differences possible";$("inspector-disclaimer").textContent="Bundled GPU reference geometry; this is not verified as an exact rendering of the selected SKU.";},error=>{if(key!==currentKey)return;console.error("RigCraft inspector: GPU reference failed to load; showing procedural preview.",error);fallback(category);$("inspector-fidelity").textContent="Procedural GPU fallback";});}
     else if(asset){loader.load(asset,g=>{if(key!==currentKey)return;resetRoot();const model=THREE.SkeletonUtils?THREE.SkeletonUtils.clone(g.scene):g.scene.clone(true);fitModel(model);$("inspector-fidelity").textContent="Reference mesh loaded";},error=>{if(key!==currentKey)return;console.error(`RigCraft inspector: ${category} reference failed to load from ${asset}; showing procedural preview.`,error);fallback(category);$("inspector-fidelity").textContent="Procedural fallback · reference unavailable";});}
     else fallback(category);
