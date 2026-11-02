@@ -227,41 +227,49 @@ let gpuMixer = null;
 let gpuFanAction = null;
 
 function loadRealisticModels() {
-  if (!THREE.GLTFLoader || !window.MeshoptDecoder) return;
+  if (!THREE.GLTFLoader) {
+    console.error("RigCraft 3D: GLTFLoader is unavailable; using procedural component models.");
+    return;
+  }
+  if (!window.RigCraftAssetManager) {
+    console.error("RigCraft 3D: component asset manager is unavailable.");
+    return;
+  }
 
-  componentAssetManager = window.RigCraftAssetManager.create(THREE, { meshoptDecoder: window.MeshoptDecoder });
-  const load = (url, onLoaded, label) => {
-    componentAssetManager.load(url).then((gltf) => {
+  // Meshopt is optional for uncompressed GLBs. Pass it when present, but never
+  // block all model loading just because the optional decoder is unavailable.
+  componentAssetManager = window.RigCraftAssetManager.create(THREE, {
+    meshoptDecoder: window.MeshoptDecoder || undefined
+  });
+  const registry = window.RigCraftModelRegistry;
+  const load = (key, onLoaded, label) => {
+    const record = registry && registry.get(key);
+    if (!record || !record.asset) {
+      console.info("RigCraft 3D: no bundled GLB for " + label + "; using its procedural model.");
+      return;
+    }
+    componentAssetManager.load(record.asset).then((gltf) => {
       onLoaded(gltf);
+      console.info("RigCraft 3D: loaded detailed " + label + " model from " + record.asset);
       if (hardwareLoaded) rebuildScene();
-    }).catch((error) => console.warn(
-      "RigCraft 3D: using the procedural " + label + " fallback because its model could not be loaded.", error
-    ));
+    }).catch((error) => {
+      console.error("RigCraft 3D: failed to load " + label + " GLB at " + record.asset + "; using procedural fallback.", error);
+    });
   };
 
-  load("assets/models/gpu.glb", (gltf) => {
+  load("gpu", (gltf) => {
     realisticGpuAsset = gltf.scene;
     realisticGpuAnimations = gltf.animations || [];
   }, "GPU");
-  load("assets/models/cpu.glb", (gltf) => {
-    realisticCpuAsset = gltf.scene;
-  }, "CPU");
-  load("assets/models/psu.glb", (gltf) => {
-    realisticPsuAsset = gltf.scene;
-  }, "PSU");
-  load("assets/models/motherboard.glb", (gltf) => {
-    realisticMotherboardAsset = gltf.scene;
-  }, "motherboard");
-  load("assets/models/cooler.glb", (gltf) => {
+  load("cpu", (gltf) => { realisticCpuAsset = gltf.scene; }, "CPU");
+  load("psu", (gltf) => { realisticPsuAsset = gltf.scene; }, "PSU");
+  load("motherboard", (gltf) => { realisticMotherboardAsset = gltf.scene; }, "motherboard");
+  load("cooler", (gltf) => {
     realisticCoolerAsset = gltf.scene;
     realisticCoolerAnimations = gltf.animations || [];
   }, "CPU cooler");
-  load("assets/models/ram.glb", (gltf) => {
-    realisticRamAsset = gltf.scene;
-  }, "RAM");
-  load("assets/models/storage.glb", (gltf) => {
-    realisticStorageAsset = gltf.scene;
-  }, "storage");
+  load("ram", (gltf) => { realisticRamAsset = gltf.scene; }, "RAM");
+  load("storage", (gltf) => { realisticStorageAsset = gltf.scene; }, "storage");
 }
 
 const categoryInfo = {
@@ -855,10 +863,10 @@ function buildGPUProcedural() {
 }
 
 function buildGPU() {
-  // The only bundled GPU asset is a reference RTX 3080 mesh, not a library of
-  // exact SKUs. Use it for the flagship reference; give other catalogue cards
-  // their own fan count, shroud, accents and length rather than reusing it.
-  if (!realisticGpuAsset || selected.gpus?.id !== "rtx4090") {
+  // This bundled mesh represents an RTX 3080 reference only. Never display it
+  // as a different GPU SKU; other selections retain the procedural fallback
+  // until an appropriately licensed matching model is added.
+  if (!realisticGpuAsset || selected.gpus?.id !== "rtx3080") {
     gpuMixer = null;
     gpuFanAction = null;
     buildGPUProcedural();
