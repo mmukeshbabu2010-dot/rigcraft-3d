@@ -140,8 +140,12 @@
     for(let i=0;i<10;i++)box(g,[.018,.1,.018],[-.22+i*.048,.22,-.68],materials.metal);
     box(g,[.42,.12,.018],[0,-.29,-.66],materials.metal);
   }
+  function buildCooler(){const g=new THREE.Group();orbit.add(g);if(partData.cooling_type==="Liquid"){box(g,[.16,.78,1.55],[0,0,0],materials.dark);const n=Math.max(1,Math.min(Number(partData.fan_count)||2,3));for(let i=0;i<n;i++)addFan(g,[-.12,-.28+(i-(n-1)/2)*.48,0],.29);box(g,[.55,.18,.55],[.45,0,0],materials.shell);for(let i=0;i<2;i++){const c=new THREE.CatmullRomCurve3([new THREE.Vector3(.5,.05,(i-.5)*.2),new THREE.Vector3(.72,.35,(i-.5)*.3),new THREE.Vector3(.48,.6,(i-.5)*.4)]);g.add(new THREE.Mesh(new THREE.TubeGeometry(c,24,.035,8,false),materials.fan));}}else{box(g,[.52,.82,.62],[0,0,0],materials.metal);for(let i=0;i<15;i++)box(g,[.56,.025,.66],[-.03,-.38+i*.055,0],materials.metal);addFan(g,[.31,0,0],.28);}}
+  function buildRam(){const n=Math.max(1,Math.min(Number(partData.module_count)||2,4)),g=new THREE.Group();orbit.add(g);for(let i=0;i<n;i++){const z=(i-(n-1)/2)*.42;box(g,[.16,1.18,.27],[0,0,z],materials.dark);box(g,[.18,.96,.24],[.015,.04,z],materials.shell);for(let k=0;k<10;k++)box(g,[.19,.018,.22],[-.01,-.39+k*.09,z],materials.metal);box(g,[.19,.06,.24],[.015,.55,z],materials.accent);}}
+  function buildStorage(){const g=new THREE.Group();orbit.add(g);const sata=String(partData.drive_type||"").includes("2.5");box(g,sata?[1.45,.16,1.02]:[.34,.09,1.25],[0,0,0],materials.dark);box(g,sata?[1.34,.035,.92]:[.29,.025,1.12],[0,.095,0],materials.shell);if(!sata){box(g,[.25,.035,.25],[0,.13,-.38],materials.metal);for(let i=0;i<5;i++)box(g,[.035,.018,.18],[-.09+i*.045,.13,.22],materials.accent);}}
+  function buildCaseFan(){const size=Math.max(80,Math.min(Number(partData.size_mm)||120,200))/120,g=new THREE.Group();orbit.add(g);box(g,[1.05*size,.09,1.05*size],[0,0,0],materials.dark);addFan(g,[0,.08,0],.43*size);}
   const assetMap={motherboards:"assets/models/motherboard.glb",cpus:"assets/models/cpu.glb",psus:"assets/models/psu.glb"};
-  const fidelityText={cases:"Procedural case illustration",motherboards:"Reference motherboard mesh",cpus:"Reference CPU mesh",gpus:"Procedural GPU model",psus:"Reference PSU mesh"};
+  const fidelityText={coolers:"Procedural cooler model",ram:"Procedural memory model",storage:"Procedural storage model",fans:"Procedural case-fan model",cases:"Procedural case illustration",motherboards:"Reference motherboard mesh",cpus:"Reference CPU mesh",gpus:"Procedural GPU model",psus:"Reference PSU mesh"};
   function fitModel(model) {
     model.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(model);const size=bounds.getSize(new THREE.Vector3());const center=bounds.getCenter(new THREE.Vector3());
     model.position.sub(center);const span=Math.max(size.x,size.y,size.z)||1;model.scale.multiplyScalar(1.6/span);model.updateMatrixWorld(true);orbit.add(model);
@@ -168,6 +172,10 @@
     if(category==="cpus")facts.push(data.socket||"Socket n/a",`${data.power_watts??"?"} W listed power`);
     if(category==="gpus")facts.push(`${data.length_mm??"?"} mm length`,`${data.power_watts??"?"} W listed power`,`${data.size_x??"?"} size class`);
     if(category==="psus")facts.push(`${data.wattage??"?"} W capacity`);
+    if(category==="coolers")facts.push(data.cooling_type||"Cooler",data.radiator_size_mm?`${data.radiator_size_mm} mm radiator`:`${data.height_mm??"?"} mm height`);
+    if(category==="ram")facts.push(`${data.capacity_gb??"?"} GB`,data.memory_type||"Memory",`${data.speed_mt_s??"?"} MT/s`);
+    if(category==="storage")facts.push(data.drive_type||"Storage",`${data.capacity_gb??"?"} GB`);
+    if(category==="fans")facts.push(`${data.size_mm??"?"} mm fan`,data.rgb?"ARGB":"No RGB");
     facts.filter(Boolean).forEach(f=>factRow.appendChild(makeFact(f)));
     resetRoot();
     $("inspector-fidelity").textContent=fidelityText[category]||"Illustrative model";
@@ -179,7 +187,7 @@
     else fallback(category);
   }
   function fallback(category) {
-    resetRoot();if(category==="cases")buildCase();else if(category==="gpus")buildGpu();else if(category==="motherboards")buildBoard();else if(category==="cpus")buildCpu();else buildPsu();fitProcedural();
+    resetRoot();if(category==="cases")buildCase();else if(category==="gpus")buildGpu();else if(category==="motherboards")buildBoard();else if(category==="cpus")buildCpu();else if(category==="psus")buildPsu();else if(category==="coolers")buildCooler();else if(category==="ram")buildRam();else if(category==="storage")buildStorage();else if(category==="fans")buildCaseFan();fitProcedural();
   }
   function resize() { const r=canvas.getBoundingClientRect();const w=Math.max(1,Math.floor(r.width)),h=Math.max(1,Math.floor(r.height));renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.25));renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix(); }
   if(typeof ResizeObserver!=="undefined"){resizeObserver=new ResizeObserver(resize);resizeObserver.observe(canvas);}else window.addEventListener("resize",resize);resize();

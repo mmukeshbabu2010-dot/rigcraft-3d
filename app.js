@@ -208,7 +208,7 @@ const selected = {
   motherboards: null,
   cpus: null,
   gpus: null,
-  psus: null
+  psus: null, coolers: null, ram: null, storage: null, fans: null
 };
 
 // These attributed GLB meshes replace the most visible generic placeholders.
@@ -277,7 +277,7 @@ const categoryInfo = {
   motherboards: { label: "Motherboard" },
   cpus: { label: "CPU" },
   gpus: { label: "GPU" },
-  psus: { label: "PSU" }
+  psus: { label: "PSU" }, coolers: { label: "CPU cooler" }, ram: { label: "Memory (RAM)" }, storage: { label: "Storage" }, fans: { label: "Case fan" }
 };
 
 function hex(value, fallback = 0x45a29e) {
@@ -1106,9 +1106,11 @@ function optionMeta(category, item) {
     return `${item.power_watts ?? "?"} W · ${item.length_mm ?? "?"} mm`;
   }
 
-  if (category === "psus") {
-    return `${item.wattage ?? "?"} W`;
-  }
+  if (category === "psus") return `${item.wattage ?? "?"} W`;
+  if (category === "coolers") return item.cooling_type === "Liquid" ? `${item.radiator_size_mm} mm radiator` : `${item.height_mm} mm height`;
+  if (category === "ram") return `${item.capacity_gb} GB · ${item.memory_type} · ${item.speed_mt_s} MT/s`;
+  if (category === "storage") return `${item.drive_type} · ${item.capacity_gb/1000} TB`;
+  if (category === "fans") return `${item.size_mm} mm · ${item.rgb ? "ARGB" : "non-RGB"}`;
 
   return "";
 }
@@ -1262,9 +1264,9 @@ function updateSpecsAndCompatibility() {
   setSpec("selected-cpu", "CPU", selected.cpus?.name || "Not selected");
   // These categories are shown explicitly so the build summary cannot imply that
   // the current five-category catalogue is a complete PC parts list.
-  setSpec("selected-cooler", "CPU cooler", "Not selectable yet");
-  setSpec("selected-ram", "Memory (RAM)", "Not selectable yet");
-  setSpec("selected-storage", "Storage", "Not selectable yet");
+  setSpec("selected-cooler", "CPU cooler", selected.coolers?.name || "Not selected");
+  setSpec("selected-ram", "Memory (RAM)", selected.ram?.name || "Not selected");
+  setSpec("selected-storage", "Storage", selected.storage?.name || "Not selected");
   setSpec("selected-gpu", "GPU", selected.gpus?.name || "Not selected");
   setSpec("selected-psu", "PSU", selected.psus?.name || "Not selected");
 

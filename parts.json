@@ -154,5 +154,91 @@
       "name": "750W Gold PSU",
       "wattage": 750
     }
+  ],
+  "coolers": [
+    {
+      "id": "tower-air-120",
+      "name": "Dual-Tower Air Cooler (Illustrative)",
+      "cooling_type": "Air",
+      "height_mm": 158,
+      "fan_count": 2
+    },
+    {
+      "id": "aio-240",
+      "name": "240 mm Liquid AIO (Illustrative)",
+      "cooling_type": "Liquid",
+      "radiator_size_mm": 240,
+      "fan_count": 2
+    },
+    {
+      "id": "aio-360",
+      "name": "360 mm Liquid AIO (Illustrative)",
+      "cooling_type": "Liquid",
+      "radiator_size_mm": 360,
+      "fan_count": 3
+    }
+  ],
+  "ram": [
+    {
+      "id": "ddr5-32gb-6000",
+      "name": "DDR5 32 GB Kit (2x16 GB)",
+      "memory_type": "DDR5",
+      "capacity_gb": 32,
+      "speed_mt_s": 6000,
+      "module_count": 2
+    },
+    {
+      "id": "ddr5-64gb-6000",
+      "name": "DDR5 64 GB Kit (2x32 GB)",
+      "memory_type": "DDR5",
+      "capacity_gb": 64,
+      "speed_mt_s": 6000,
+      "module_count": 2
+    },
+    {
+      "id": "ddr4-32gb-3600",
+      "name": "DDR4 32 GB Kit (2x16 GB)",
+      "memory_type": "DDR4",
+      "capacity_gb": 32,
+      "speed_mt_s": 3600,
+      "module_count": 2
+    }
+  ],
+  "storage": [
+    {
+      "id": "nvme-1tb",
+      "name": "M.2 NVMe SSD 1 TB (Illustrative)",
+      "drive_type": "NVMe M.2",
+      "capacity_gb": 1000,
+      "length_mm": 80
+    },
+    {
+      "id": "nvme-2tb",
+      "name": "M.2 NVMe SSD 2 TB (Illustrative)",
+      "drive_type": "NVMe M.2",
+      "capacity_gb": 2000,
+      "length_mm": 80
+    },
+    {
+      "id": "sata-2tb",
+      "name": "2.5-inch SATA SSD 2 TB (Illustrative)",
+      "drive_type": "2.5-inch SATA",
+      "capacity_gb": 2000,
+      "length_mm": 100
+    }
+  ],
+  "fans": [
+    {
+      "id": "fan-120-argb",
+      "name": "120 mm ARGB Case Fan",
+      "size_mm": 120,
+      "rgb": true
+    },
+    {
+      "id": "fan-140-black",
+      "name": "140 mm Case Fan",
+      "size_mm": 140,
+      "rgb": false
+    }
   ]
 }
