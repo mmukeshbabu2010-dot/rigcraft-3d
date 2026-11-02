@@ -60,6 +60,7 @@ for (const file of ["style.css", "legal.css"]) {
 }
 
 const appSource = read("app.js");
+const registrySource = read("js/model-registry.js");
 const workspaceSource = read("js/workspace.js");
 assert.match(appSource, /getSelectedPartIds/ , "Builder must expose selected part IDs for snapshots");
 assert.match(appSource, /restoreBuildSnapshot/ , "Builder must expose a restore API");
@@ -78,6 +79,11 @@ assert.match(appSource, /const caseId = selected\.cases\?\.id/, "Case visuals mu
 const assetManagerSource = read("js/component-asset-manager.js");
 assert.match(assetManagerSource, /new THREE\.GLTFLoader\(\)/, "GPU asset manager must construct the detailed GLB loader");
 assert.match(assetManagerSource, /setMeshoptDecoder/, "Compressed GLB decoding must be configured");
+assert.match(appSource, /if \(!THREE\.GLTFLoader\)/, "GLB loading should require GLTFLoader");
+assert.doesNotMatch(appSource, /!THREE\.GLTFLoader\s*\|\|\s*!window\.MeshoptDecoder/, "Optional Meshopt decoder must not block ordinary GLB loading");
+assert.match(registrySource, /assets\/models\/gpu\.glb/, "GPU registry must reference the bundled GLB");
+assert.match(registrySource, /assets\/models\/motherboard\.glb/, "Motherboard registry must reference the bundled GLB");
+
 assert.ok(fs.existsSync(path.join(root, "assets/models/gpu.glb")), "GPU GLB asset is missing");
 assert.ok(fs.existsSync(path.join(root, "assets/models/cpu.glb")), "CPU GLB asset is missing");
 assert.ok(fs.existsSync(path.join(root, "assets/models/psu.glb")), "PSU GLB asset is missing");
