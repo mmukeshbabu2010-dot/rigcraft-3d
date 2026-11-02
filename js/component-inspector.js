@@ -172,10 +172,10 @@
     resetRoot();
     $("inspector-fidelity").textContent=fidelityText[category]||"Illustrative model";
     $("inspector-disclaimer").textContent=category==="motherboards"?"Reference board mesh is not an exact rendering of every selected model. Listed specs come from the prototype catalogue.":category==="cpus"||category==="psus"?"Reference mesh is a visual example, not a SKU-specific rendering. Dimensions and details may differ.":category==="gpus"?"Only the bundled reference GPU mesh is used for its designated selection. Other cards are family-level illustrations.":"Case is a procedural visual study, not exact manufacturer CAD. Fit limits are illustrative.";
-    const asset=assetMap[category]&&!(category==="motherboards"&&data.form_factor==="Mini-ITX")?assetMap[category]:null;
+    const asset=assetMap[category]||null;
     const useBundledGpu=category==="gpus"&&data.id==="rtx4090";
-    if(useBundledGpu){loader.load("assets/models/gpu.glb",g=>{if(key!==currentKey)return;resetRoot();const model=THREE.SkeletonUtils?THREE.SkeletonUtils.clone(g.scene):g.scene.clone(true);fitModel(model);$("inspector-fidelity").textContent="Reference GPU mesh · SKU differences possible";},()=>{});}
-    else if(asset){loader.load(asset,g=>{if(key!==currentKey)return;resetRoot();const model=THREE.SkeletonUtils?THREE.SkeletonUtils.clone(g.scene):g.scene.clone(true);fitModel(model);},()=>{if(key===currentKey)fallback(category);});}
+    if(useBundledGpu){loader.load("assets/models/gpu.glb",g=>{if(key!==currentKey)return;resetRoot();const model=THREE.SkeletonUtils?THREE.SkeletonUtils.clone(g.scene):g.scene.clone(true);fitModel(model);$("inspector-fidelity").textContent="Reference GPU mesh · SKU differences possible";$("inspector-disclaimer").textContent="Bundled GPU reference geometry; this is not verified as an exact rendering of the selected SKU.";},error=>{if(key!==currentKey)return;console.error("RigCraft inspector: GPU reference failed to load; showing procedural preview.",error);fallback(category);$("inspector-fidelity").textContent="Procedural GPU fallback";});}
+    else if(asset){loader.load(asset,g=>{if(key!==currentKey)return;resetRoot();const model=THREE.SkeletonUtils?THREE.SkeletonUtils.clone(g.scene):g.scene.clone(true);fitModel(model);$("inspector-fidelity").textContent="Reference mesh loaded";},error=>{if(key!==currentKey)return;console.error(`RigCraft inspector: ${category} reference failed to load from ${asset}; showing procedural preview.`,error);fallback(category);$("inspector-fidelity").textContent="Procedural fallback · reference unavailable";});}
     else fallback(category);
   }
   function fallback(category) {
