@@ -22,6 +22,8 @@ jobs:
           node-version: 24
       - name: Check JavaScript syntax
         run: |
+          node --check js/performance.js
+          node --check sw.js
           node --check app.js
           node --check js/workspace.js
           node --check js/component-inspector.js
@@ -36,6 +38,7 @@ jobs:
           node --check scripts/test-renderer-quality.mjs
       - name: Validate pages, local assets, and parts catalogue
         run: |
+          node scripts/test-performance-support.mjs
           node scripts/validate-site.mjs
           node scripts/test-compatibility.mjs
           node scripts/test-completeness.mjs

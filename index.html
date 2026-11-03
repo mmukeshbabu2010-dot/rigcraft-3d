@@ -16,9 +16,10 @@
   <script src="vendor/meshopt_decoder.js" referrerpolicy="no-referrer"></script>
   <script src="vendor/SkeletonUtils-r128.js" referrerpolicy="no-referrer"></script>
   <script src="vendor/OrbitControls-r128.js" referrerpolicy="no-referrer"></script>
-  <script src="js/supabase-catalogue.js"></script>
   <script src="js/model-registry.js"></script>
   <script src="js/component-asset-manager.js"></script>
+  <script src="js/performance.js"></script>
+  <script src="js/supabase-catalogue.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#hardware-configuration">Skip to hardware configuration</a>
@@ -31,6 +32,11 @@
         <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
         <button id="reset-camera" type="button">Reset view</button>
       </div>
+      <label class="graphics-quality-control" for="graphics-quality">Graphics quality
+        <select id="graphics-quality" aria-label="Graphics quality">
+          <option value="auto">Auto</option><option value="low">Low (older devices)</option><option value="balanced">Balanced</option><option value="high">High</option>
+        </select>
+      </label>
       <p class="viewport-hint">Drag to rotate. Scroll or pinch to zoom.</p>
       <p class="viewport-model-note">Bundled reference meshes are used where available; other components use procedural models. Shapes and fit are illustrative, not manufacturer CAD.</p>
     </section>

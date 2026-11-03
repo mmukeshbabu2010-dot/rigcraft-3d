@@ -1,0 +1,17 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+const html = fs.readFileSync("index.html", "utf8");
+const perf = fs.readFileSync("js/performance.js", "utf8");
+const sw = fs.readFileSync("sw.js", "utf8");
+assert.ok(html.includes("js/performance.js"));
+assert.ok(html.includes('id="graphics-quality"'));
+assert.ok(perf.includes("deviceMemory"));
+assert.ok(perf.includes("hardwareConcurrency"));
+assert.ok(perf.includes("saveData"));
+assert.ok(perf.includes("modelMode: 'procedural'"));
+assert.ok(perf.includes("frameInterval"));
+assert.ok(perf.includes("supabase.co/rest/v1/parts"));
+assert.ok(sw.includes("CORE_FILES"));
+assert.ok(sw.includes(".glb"));
+assert.ok(sw.includes("parts.json"));
+console.log("Performance support checks passed.");
