@@ -38,7 +38,8 @@ for (const category of categories) {
 }
 assert.equal(total, 31, "The prototype should contain 31 component selections across nine categories");
 assert.ok(inspector.includes("resolveModel(category,data)"), "Inspector must resolve a model descriptor for the selected catalogue record");
-assert.ok(inspector.includes("Never show a category-level reference mesh"), "Generic category meshes must not be presented as SKU-specific models");
+assert.ok(inspector.includes("loadSkuMesh(modelDescriptor,category,key)"), "The inspector must load the selected SKU GLB instead of a category placeholder");
+assert.ok(app.includes("ensureSelectedSkuMeshes()"), "The assembled PC must load selected SKU-specific meshes");
 console.log(`Component catalogue QA passed: ${total} entries across ${categories.length} categories; identity, key specs and renderer mappings verified.`);
 
 const validatorStart = app.indexOf("function validateParts(data) {");
@@ -82,9 +83,10 @@ for (const category of categories) {
   for (const part of catalogue[category]) {
     const descriptor = registry.resolve(category, part);
     assert.ok(descriptor, `Missing model descriptor for ${part.id}`);
-    assert.equal(descriptor.kind, "sku-linked-procedural-preview");
+    assert.equal(descriptor.kind, "original-custom-high-detail-mesh");
+    assert.equal(descriptor.asset, `assets/models/catalogue/${part.id}.glb`);
     assert.equal(descriptor.exactManufacturerModel, false, "Custom geometry must never be labelled as official manufacturer CAD");
     assert.ok(descriptor.shape, `Missing shape profile for ${part.id}`);
   }
 }
-console.log("SKU model-profile QA passed: all 31 selections resolve to explicit, honestly labelled SKU-linked procedural previews.");
+console.log("SKU model-profile QA passed: all 31 selections resolve to explicit, honestly labelled individual original custom high-detail GLB meshes.");

@@ -74,7 +74,7 @@ assert.match(appSource, /Socket latch and retention arm/, "Motherboard model mus
 assert.match(appSource, /function buildGPUProcedural\(\)/, "GPU must retain a procedural fallback if the GLB cannot load");
 assert.match(appSource, /const fanCount = isCompact \|\| isAmdMidrange \? 2 : 3/, "GPU families must use different cooler layouts");
 assert.match(appSource, /card\.scale\.z = lengthScale/, "GPU length must follow the selected catalogue part");
-assert.match(appSource, /selected\.gpus\?\.id !== "rtx3080"/, "The RTX 3080 reference GLB must only be used for the matching GPU SKU");
+assert.match(appSource, /loadedSkuIds\.gpus !== selected\.gpus\?\.id/, "The selected GPU must use its own SKU mesh");
 assert.match(appSource, /Front intake pattern/, "Case variants must have differentiated front-panel ventilation");
 assert.match(appSource, /const caseId = selected\.cases\?\.id/, "Case visuals must respond to the selected case");
 const assetManagerSource = read("js/component-asset-manager.js");
@@ -83,7 +83,10 @@ assert.match(assetManagerSource, /setMeshoptDecoder/, "Compressed GLB decoding m
 assert.match(appSource, /if \(!THREE\.GLTFLoader\)/, "GLB loading should require GLTFLoader");
 assert.doesNotMatch(appSource, /!THREE\.GLTFLoader\s*\|\|\s*!window\.MeshoptDecoder/, "Optional Meshopt decoder must not block ordinary GLB loading");
 assert.match(registrySource, /assets\/models\/gpu\.glb/, "GPU registry must reference the bundled GLB");
-assert.match(registrySource, /assets\/models\/motherboard\.glb/, "Motherboard registry must reference the bundled GLB");
+assert.match(registrySource, /assets\/models\/motherboard\.glb/, "Legacy motherboard reference mapping must remain backwards-compatible");
+assert.match(registrySource, /assets\/models\/catalogue\//, "Every selected SKU must resolve to its own catalogue GLB");
+assert.match(appSource, /ensureSelectedSkuMeshes\(\)/, "Assembly must load the selected SKU meshes");
+assert.match(read("js/component-inspector.js"), /loadSkuMesh\(modelDescriptor,category,key\)/, "Inspector must load the selected SKU GLB");
 
 assert.ok(fs.existsSync(path.join(root, "assets/models/gpu.glb")), "GPU GLB asset is missing");
 assert.ok(fs.existsSync(path.join(root, "assets/models/cpu.glb")), "CPU GLB asset is missing");
@@ -91,7 +94,10 @@ assert.ok(fs.existsSync(path.join(root, "assets/models/psu.glb")), "PSU GLB asse
 assert.ok(fs.existsSync(path.join(root, "assets/models/motherboard.glb")), "Motherboard GLB asset is missing");
 assert.ok(fs.existsSync(path.join(root, "assets/models/cooler.glb")), "Cooler GLB asset is missing");
 assert.ok(fs.existsSync(path.join(root, "assets/models/ram.glb")), "RAM GLB asset is missing");
-assert.ok(fs.existsSync(path.join(root, "assets/models/storage.glb")), "Storage GLB asset is missing");
+assert.ok(fs.existsSync(path.join(root, "assets/models/storage.glb")), "Legacy storage GLB asset is missing");
+for (const entries of Object.values(JSON.parse(read("parts.json")))) {
+  for (const part of entries) assert.ok(fs.existsSync(path.join(root, "assets/models/catalogue", `${part.id}.glb`)), `Per-SKU GLB is missing: ${part.id}`);
+}
 assert.match(appSource, /realisticMotherboardAsset/, "Motherboard GLB must be used when available");
 assert.match(appSource, /realisticCoolerAsset/, "AIO cooler GLB must be used when available");
 assert.match(appSource, /anchorOffset: \[0\.517, -0\.589, -0\.529\]/, "The selected 240 mm AIO reference mesh must retain its CPU-mount anchor");

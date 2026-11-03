@@ -33,7 +33,13 @@
     pcb: new THREE.MeshStandardMaterial({ color: 0x172b28, metalness: .28, roughness: .43 })
   };
   function box(parent, size, pos, mat) { const m = new THREE.Mesh(new THREE.BoxGeometry(...size), mat); m.position.set(...pos); parent.add(m); return m; }
-  function resetRoot() { while (orbit.children.length) { const o=orbit.children[0]; orbit.remove(o); o.traverse(n=>{if(n.geometry)n.geometry.dispose();}); } }
+  function resetRoot() {
+    while (orbit.children.length) {
+      const o=orbit.children[0]; orbit.remove(o); const imported=!!o.userData?.rigcraftLoadedAsset;
+      o.traverse(n=>{if(n.geometry)n.geometry.dispose();if(imported&&n.material){const mats=Array.isArray(n.material)?n.material:[n.material];mats.forEach(mat=>{if(mat.map)mat.map.dispose();mat.dispose();});}});
+    }
+    orbit.scale.setScalar(1);
+  }
   function addFan(parent, center, radius) {
     const rotor=new THREE.Group();rotor.position.set(center[0],center[1],center[2]);parent.add(rotor);
     const ring=new THREE.Mesh(new THREE.TorusGeometry(radius*.94,radius*.055,10,48),materials.metal);ring.rotation.x=-Math.PI/2;rotor.add(ring);
@@ -156,6 +162,18 @@
   function fitProcedural() {
     const bounds=new THREE.Box3().setFromObject(orbit);const size=bounds.getSize(new THREE.Vector3());const span=Math.max(size.x,size.y,size.z)||1;orbit.scale.setScalar(1.6/span);camera.position.set(2.55,1.65,3.3);if(controls){controls.target.set(0,0,0);controls.minDistance=1.2;controls.maxDistance=6;controls.update();}
   }
+  function disposeImported(model) { if(!model)return; model.traverse(n=>{if(n.geometry)n.geometry.dispose();if(n.material){const mats=Array.isArray(n.material)?n.material:[n.material];mats.forEach(mat=>{if(mat.map)mat.map.dispose();mat.dispose();});}}); }
+  function fitLoadedModel(model) {
+    model.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(model);const size=bounds.getSize(new THREE.Vector3());const center=bounds.getCenter(new THREE.Vector3());
+    const span=Math.max(size.x,size.y,size.z)||1;model.position.sub(center);model.scale.multiplyScalar(1.6/span);model.userData.rigcraftLoadedAsset=true;
+    model.traverse(n=>{if(n.isMesh){n.castShadow=false;n.receiveShadow=false;}});orbit.add(model);
+    camera.position.set(2.6,1.9,3.5);if(controls){controls.target.set(0,0,0);controls.minDistance=1.2;controls.maxDistance=8;controls.update();}
+  }
+  function loadSkuMesh(descriptor,category,key) {
+    if(!descriptor?.asset){fallback(category);return;}
+    $("inspector-fidelity").textContent="Loading detailed 3D mesh…";
+    loader.load(descriptor.asset,gltf=>{const model=gltf.scene||gltf.scenes?.[0];if(currentKey!==key){disposeImported(model);return;}if(!model){fallback(category);return;}fitLoadedModel(model);},undefined,()=>{if(currentKey!==key)return;$("inspector-fidelity").textContent="Mesh unavailable · showing backup preview";fallback(category);});
+  }
   function makeFact(text) { const el=document.createElement("span");el.className="inspector-spec";el.textContent=text;return el; }
   function updateInspector() {
     const activeTab=document.querySelector(".tab-btn[aria-pressed='true']");
@@ -183,9 +201,8 @@
     const modelDescriptor=resolveModel(category,data);
     $("inspector-fidelity").textContent=modelDescriptor.fidelity||"Custom illustrative 3D model";
     $("inspector-disclaimer").textContent=modelDescriptor.note||"Custom geometry is illustrative and is not manufacturer CAD.";
-    // Never show a category-level reference mesh as if it belonged to the selected SKU.
-    // The focused preview is built from the selected record's shape and available fit dimensions.
-    fallback(category);
+    // Each catalogue selection loads its own checked-in GLB; procedural geometry is only a failure fallback.
+    loadSkuMesh(modelDescriptor,category,key);
   }
   function buildCooler() {
     const liquid=partData.cooling_type==="Liquid";
