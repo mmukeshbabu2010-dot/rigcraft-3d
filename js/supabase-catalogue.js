@@ -8,7 +8,7 @@
 
   const SUPABASE_URL = "https://hscpgrscixjjedhdmwwz.supabase.co";
   const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_dSPc1N_4Ov8OxIXlftw9-g_Orr4rpCg";
-  const CATEGORIES = ["cases", "motherboards", "cpus", "ram", "gpus", "psus"];
+  const CATEGORIES = ["cases", "motherboards", "cpus", "ram", "gpus", "psus", "coolers", "storage", "fans"];
   const nativeFetch = window.fetch.bind(window);
 
   function mapPart(row) {
@@ -70,7 +70,31 @@
           );
           if (complete.length) bundled[category] = complete;
         } else {
-          bundled[category] = mapped;
+          const requiredAccessoryFields = {
+            cases: ["max_gpu_length_mm", "max_cooler_height_mm", "supported_form_factors", "supported_radiator_sizes_mm", "supported_fan_sizes_mm", "max_case_fans", "drive_bays_2_5"],
+            motherboards: ["socket", "form_factor", "memory_type", "memory_slots", "max_memory_gb", "m2_slots", "sata_ports"],
+            coolers: ["cooling_type", "socket_support", "fan_count", "max_cpu_power_watts"],
+            storage: ["drive_type", "capacity_gb", "length_mm"],
+            fans: ["size_mm", "count", "rgb"]
+          }[category] || [];
+          const complete = mapped.filter((part) => {
+            const commonFieldsComplete = requiredAccessoryFields.every((field) => {
+            const value = part[field];
+            if (Array.isArray(value)) return value.length > 0;
+            if (typeof value === "number") return Number.isFinite(value) && value > 0;
+            if (typeof value === "boolean") return true;
+            return typeof value === "string" && value.trim().length > 0;
+            });
+            const coolerDimensionsComplete = category !== "coolers" ||
+              (part.cooling_type === "Air" && Number(part.height_mm) > 0 && Number(part.fan_count) <= 2) ||
+              (part.cooling_type === "Liquid" && Number(part.radiator_size_mm) > 0 && Number(part.fan_count) <= 3);
+            const fanPackSupported = category !== "fans" || Number(part.count) <= 4;
+            const storageInterfaceSupported = category !== "storage" || ["NVMe M.2", "2.5-inch SATA"].includes(part.drive_type);
+            return commonFieldsComplete && coolerDimensionsComplete && fanPackSupported && storageInterfaceSupported;
+          });
+          // Keep the bundled category intact unless every remote row has the
+          // metadata needed for local compatibility and rendering decisions.
+          if (mapped.length > 0 && (requiredAccessoryFields.length === 0 || complete.length === mapped.length)) bundled[category] = mapped;
         }
       }
       return new Response(JSON.stringify(bundled), {

@@ -244,10 +244,12 @@ function clearGroup(group) {
 const chassis = new THREE.Group();
 const internals = new THREE.Group();
 const fansGroup = new THREE.Group();
+const coolerGroup = new THREE.Group();
+const storageGroup = new THREE.Group();
 const cableGroup = new THREE.Group();
 const gpuGroup = new THREE.Group();
 
-pcGroup.add(chassis, internals, fansGroup, cableGroup, gpuGroup);
+pcGroup.add(chassis, internals, fansGroup, coolerGroup, storageGroup, cableGroup, gpuGroup);
 
 const fanRotors = [];
 
@@ -264,7 +266,10 @@ const selected = {
   cpus: null,
   gpus: null,
   ram: null,
-  psus: null
+  psus: null,
+  coolers: null,
+  storage: null,
+  fans: null
 };
 
 // These attributed GLB meshes replace the most visible generic placeholders.
@@ -344,7 +349,10 @@ const categoryInfo = {
   cpus: { label: "CPU" },
   gpus: { label: "GPU" },
   ram: { label: "Memory (RAM)" },
-  psus: { label: "PSU" }
+  psus: { label: "PSU" },
+  coolers: { label: "CPU cooler" },
+  storage: { label: "Storage" },
+  fans: { label: "Case fan pack" }
 };
 
 function hex(value, fallback = 0x45a29e) {
@@ -417,7 +425,7 @@ function makeCurvedBlade(radius, bladeMaterial) {
   return blade;
 }
 
-function addFan(parent, position, axis = "z", radius = 0.29) {
+function addFan(parent, position, axis = "z", radius = 0.29, options = {}) {
   const fan = new THREE.Group();
   fan.position.set(...position);
 
@@ -442,6 +450,7 @@ function addFan(parent, position, axis = "z", radius = 0.29) {
     rgbMaterial
   );
   lightRing.position.z = 0.012;
+  lightRing.visible = options.rgb !== false;
   fan.add(lightRing);
 
   cylinder(fan, radius * 0.94, 0.045, [0, 0, 0], frameMaterial);
@@ -475,7 +484,8 @@ function addFan(parent, position, axis = "z", radius = 0.29) {
   }
 
   cylinder(rotor, radius * 0.23, 0.065, [0, 0, 0.045], hubMaterial);
-  cylinder(rotor, radius * 0.115, 0.07, [0, 0, 0.05], rgbMaterial);
+  const hubLight = cylinder(rotor, radius * 0.115, 0.07, [0, 0, 0.05], rgbMaterial);
+  hubLight.visible = options.rgb !== false;
 
   // Hub cap and small mounting screws.
   cylinder(rotor, radius * 0.065, 0.075, [0, 0, 0.052], silver);
@@ -682,11 +692,6 @@ function buildMotherboard() {
         box(internals, [0.05, 0.84, 0.18], [-0.69, 0.37, z], darkMetal);
       }
     }
-    if (realisticStorageAsset) {
-      addFittedAsset(internals, realisticStorageAsset, [Math.PI / 2, Math.PI / 2, 0], [0.02, 0.13, 0.59], [-0.71, -0.039, 0.189]);
-    } else {
-      box(internals, [0.02, 0.13, 0.59], [-0.71, -0.039, 0.189], darkMetal);
-    }
   } else {
     box(internals, [0.065, 1.8, 1.75], [-0.76, 0.02, 0], boardMaterial);
 
@@ -753,7 +758,6 @@ function buildMotherboard() {
   }
 
   // M.2 storage and PCIe slots.
-  box(internals, [0.025, 0.1, 0.56], [-0.56, -0.23, 0.3], metal);
   box(internals, [0.035, 0.045, 0.95], [-0.58, -0.52, 0.12], silver);
   box(internals, [0.035, 0.045, 0.62], [-0.58, -0.73, 0.25], silver);
 
@@ -810,34 +814,7 @@ function buildMotherboard() {
     }
   }
 
-  // Real AIO assembly: anchor the pump directly to the CPU, letting its
-  // radiator and tubes retain their authored relationship to the pump.
-  if (realisticCoolerAsset) {
-    addFittedAsset(
-      internals,
-      realisticCoolerAsset,
-      [0, Math.PI / 2, 0],
-      [1.3, 0.9, 0.65],
-      [-0.71, 0.374, -0.083],
-      { anchorOffset: [0.517, -0.589, -0.529] }
-    );
-  } else {
-    // Procedural fallback cooler sits directly over the selected CPU socket.
-    const coolerCenter = realisticMotherboardAsset ? [-0.59, 0.374, -0.083] : [-0.15, 0.32, -0.22];
-    box(internals, [0.25, 0.52, 0.52], coolerCenter, metal);
-
-    for (let i = 0; i < 9; i++) {
-      box(
-        internals,
-        [0.28, 0.014, 0.53],
-        [coolerCenter[0], coolerCenter[1] - 0.24 + i * 0.055, coolerCenter[2]],
-        silver,
-        { castShadow: false }
-      );
-    }
-
-    addFan(internals, [coolerCenter[0] + 0.19, coolerCenter[1], coolerCenter[2]], "x", 0.19);
-  }
+  // Cooler hardware is built separately from the selected cooler catalogue item.
 
   if (!realisticMotherboardAsset) {
   // I/O ports (procedural fallback only).
@@ -862,6 +839,94 @@ function buildMotherboard() {
       16
     );
   }
+  }
+}
+
+/* Selected CPU cooler and storage hardware */
+
+function buildCooler() {
+  clearGroup(coolerGroup);
+  const cooler = selected.coolers;
+  if (!cooler) return;
+
+  const mount = realisticMotherboardAsset
+    ? [-0.71, 0.374, -0.083]
+    : [-0.468, 0.3, -0.22];
+
+  if (cooler.cooling_type === "Air") {
+    const heightScale = Math.max(0.9, Math.min(1.12, Number(cooler.height_mm || 158) / 158));
+    const center = [mount[0] + 0.18, mount[1], mount[2]];
+    box(coolerGroup, [0.29 * heightScale, 0.42, 0.42], center, darkMetal);
+    for (let i = 0; i < 13; i++) {
+      box(coolerGroup, [0.3 * heightScale, 0.012, 0.43],
+        [center[0], center[1] - 0.2 + i * 0.033, center[2]], i % 3 === 0 ? silver : metal,
+        { castShadow: false });
+    }
+    const fanCount = Math.max(1, Math.min(2, Number(cooler.fan_count) || 1));
+    const fanX = fanCount === 1 ? [mount[0] + 0.35] : [mount[0] + 0.035, mount[0] + 0.36];
+    fanX.forEach((x) => addFan(coolerGroup, [x, mount[1], mount[2]], "x", 0.17));
+    return;
+  }
+
+  if (cooler.cooling_type === "Liquid") {
+    if (cooler.id === "aio-240" && realisticMotherboardAsset && realisticCoolerAsset) {
+      addFittedAsset(
+        coolerGroup,
+        realisticCoolerAsset,
+        [0, Math.PI / 2, 0],
+        [1.3, 0.9, 0.65],
+        mount,
+        { anchorOffset: [0.517, -0.589, -0.529] }
+      );
+      return;
+    }
+    const radiatorSize = Number(cooler.radiator_size_mm) || 240;
+    const fanCount = Math.max(2, Math.min(3, Number(cooler.fan_count) || (radiatorSize >= 360 ? 3 : 2)));
+    const span = radiatorSize >= 360 ? 0.82 : 0.58;
+    box(coolerGroup, [0.2, 0.09, span], [0.14, 1.0, 0.02], darkMetal);
+    box(coolerGroup, [0.205, 0.018, span * 0.94], [0.14, 1.052, 0.02], metal);
+    const fanPositions = fanCount === 3 ? [-0.36, 0, 0.36] : [-0.22, 0.22];
+    fanPositions.forEach((z) => addFan(coolerGroup, [0.14, 0.91, z], "y", 0.16));
+    const pump = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.13, 32), darkMetal);
+    pump.rotation.z = Math.PI / 2;
+    pump.position.set(mount[0] + 0.13, mount[1], mount[2]);
+    coolerGroup.add(pump);
+    const pumpCap = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.02, 32), rgbMaterial);
+    pumpCap.rotation.z = Math.PI / 2;
+    pumpCap.position.set(mount[0] + 0.205, mount[1], mount[2]);
+    coolerGroup.add(pumpCap);
+    tube(coolerGroup, [[mount[0] + 0.2, mount[1] + 0.05, mount[2] - 0.08], [mount[0] + 0.42, 0.65, mount[2] - 0.12], [0.14, 0.94, -0.24]], 0.018, cableHighlight);
+    tube(coolerGroup, [[mount[0] + 0.2, mount[1] - 0.05, mount[2] + 0.08], [mount[0] + 0.4, 0.58, mount[2] + 0.18], [0.14, 0.94, 0.24]], 0.018, cableMaterial);
+  }
+}
+
+function buildStorage() {
+  clearGroup(storageGroup);
+  const drive = selected.storage;
+  if (!drive) return;
+
+  if (drive.drive_type === "NVMe M.2") {
+    const position = realisticMotherboardAsset ? [-0.71, -0.039, 0.189] : [-0.56, -0.23, 0.3];
+    if (realisticMotherboardAsset && realisticStorageAsset) {
+      addFittedAsset(storageGroup, realisticStorageAsset, [Math.PI / 2, Math.PI / 2, 0],
+        [0.02, 0.13, 0.59], position);
+    } else {
+      box(storageGroup, [0.025, 0.09, 0.52], position, darkMetal);
+      for (let i = 0; i < 4; i++) {
+        box(storageGroup, [0.012, 0.045, 0.075], [position[0] + 0.02, position[1] + 0.052, position[2] - 0.18 + i * 0.11],
+          i % 2 ? chipMaterial : metal, { castShadow: false });
+      }
+      box(storageGroup, [0.03, 0.018, 0.08], [position[0], position[1] - 0.055, position[2] + 0.2], silver);
+    }
+    return;
+  }
+
+  if (drive.drive_type === "2.5-inch SATA") {
+    const position = [0.32, -0.57, -0.68];
+    box(storageGroup, [0.48, 0.085, 0.58], position, darkMetal);
+    box(storageGroup, [0.45, 0.012, 0.55], [position[0], position[1] + 0.05, position[2]], metal);
+    box(storageGroup, [0.12, 0.018, 0.08], [position[0] - 0.18, position[1] + 0.062, position[2] + 0.2], silver);
+    tube(storageGroup, [[0.08, -0.5, -0.55], [-0.12, -0.36, -0.34], [-0.48, -0.22, 0.12]], 0.012, cableHighlight);
   }
 }
 
@@ -980,15 +1045,17 @@ function buildGPU() {
 
 function buildFans() {
   clearGroup(fansGroup);
+  const pack = selected.fans;
+  if (!pack) return;
 
-  // Do not clear fanRotors here. The CPU cooler and GPU fans
-  // have already registered their rotors during scene construction.
-
-  for (const y of [-0.58, 0, 0.58]) {
-    addFan(fansGroup, [0.66, y, 0.78], "x", 0.24);
-  }
-
-  addFan(fansGroup, [-0.45, 0.43, -0.84], "z", 0.22);
+  const count = Math.max(1, Math.min(4, Number(pack.count) || 3));
+  const radius = 0.24 * (Number(pack.size_mm || 120) / 120);
+  const side = count === 2 ? [-0.42, 0.42] : [-0.58, 0, 0.58];
+  const placements = side.map((y) => [[0.66, y, 0.78], "x"]);
+  if (count === 4) placements.push([[-0.45, 0.43, -0.84], "z"]);
+  placements.slice(0, count).forEach(([position, axis]) => {
+    addFan(fansGroup, position, axis, radius, { rgb: pack.rgb !== false });
+  });
 }
 
 /* Sleeved power cables */
@@ -1069,6 +1136,8 @@ function rebuildScene() {
 
   buildChassis();
   buildMotherboard();
+  buildCooler();
+  buildStorage();
   buildGPU();
   buildFans();
   buildCables();
@@ -1181,9 +1250,10 @@ function optionMeta(category, item) {
     return `${item.capacity_gb ?? "?"} GB · DDR${String(item.memory_type || "?").replace(/^DDR/i, "")} · ${item.speed_mhz ?? "?"} MT/s`;
   }
 
-  if (category === "psus") {
-    return `${item.wattage ?? "?"} W`;
-  }
+  if (category === "psus") return `${item.wattage ?? "?"} W`;
+  if (category === "coolers") return item.cooling_type === "Liquid" ? `${item.radiator_size_mm} mm radiator · ${item.max_cpu_power_watts} W rating` : `${item.height_mm} mm height · ${item.max_cpu_power_watts} W rating`;
+  if (category === "storage") return `${item.drive_type} · ${Number(item.capacity_gb || 0) / 1000} TB`;
+  if (category === "fans") return `${item.count} × ${item.size_mm} mm · ${item.rgb ? "ARGB" : "non-RGB"}`;
 
   return "";
 }
@@ -1246,104 +1316,111 @@ function renderOptions(category) {
 function compatibilityCheck() {
   const issues = [];
   const unknown = [];
-
   const c = selected.cases;
   const m = selected.motherboards;
   const cpu = selected.cpus;
   const gpu = selected.gpus;
   const ram = selected.ram;
   const psu = selected.psus;
+  const cooler = selected.coolers;
+  const storage = selected.storage;
+  const fans = selected.fans;
 
-  if (!c || !m || !cpu || !gpu || !ram || !psu) {
-    return {
-      status: "INCOMPLETE",
-      issues: ["Choose a case, motherboard, CPU, RAM, GPU and PSU."],
-      estimatedPower: null
-    };
+  if (!c || !m || !cpu || !gpu || !ram || !psu || !cooler || !storage) {
+    return { status: "INCOMPLETE", issues: ["Choose a case, motherboard, CPU, cooler, RAM, GPU, storage drive and PSU."], estimatedPower: null };
   }
 
-  if (!c.max_gpu_length_mm || !gpu.length_mm) {
-    unknown.push("GPU length or case clearance is unknown.");
-  } else if (gpu.length_mm > c.max_gpu_length_mm) {
-    issues.push(
-      `GPU length ${gpu.length_mm} mm exceeds the case clearance of ${c.max_gpu_length_mm} mm.`
-    );
-  }
+  const gpuLength = validNumber(gpu.length_mm);
+  const gpuClearance = validNumber(c.max_gpu_length_mm);
+  if (gpuLength === null || gpuClearance === null) unknown.push("GPU length or case clearance is unknown.");
+  else if (gpuLength > gpuClearance) issues.push(`GPU length ${gpuLength} mm exceeds the case clearance of ${gpuClearance} mm.`);
 
-  if (!m.socket || !cpu.socket) {
-    unknown.push("CPU or motherboard socket information is missing.");
-  } else if (m.socket !== cpu.socket) {
-    issues.push(`Socket mismatch: motherboard ${m.socket}, CPU ${cpu.socket}.`);
-  }
+  if (!m.socket || !cpu.socket) unknown.push("CPU or motherboard socket information is missing.");
+  else if (m.socket !== cpu.socket) issues.push(`Socket mismatch: motherboard ${m.socket}, CPU ${cpu.socket}.`);
 
   const boardMemoryType = String(m.memory_type || "").trim().toUpperCase();
   const ramMemoryType = String(ram.memory_type || "").trim().toUpperCase();
-  if (!boardMemoryType || !ramMemoryType) {
-    unknown.push("Motherboard or RAM memory-generation information is missing.");
-  } else if (boardMemoryType !== ramMemoryType) {
-    issues.push(`Memory type mismatch: motherboard supports ${boardMemoryType}, selected RAM is ${ramMemoryType}.`);
-  }
+  if (!boardMemoryType || !ramMemoryType) unknown.push("Motherboard or RAM memory-generation information is missing.");
+  else if (boardMemoryType !== ramMemoryType) issues.push(`Memory type mismatch: motherboard supports ${boardMemoryType}, selected RAM is ${ramMemoryType}.`);
 
   const moduleCount = validNumber(ram.modules);
   const dimmSlots = validNumber(m.memory_slots);
-  if (moduleCount === null || dimmSlots === null) {
-    unknown.push("RAM module count or motherboard DIMM slot count is unknown.");
-  } else if (moduleCount > dimmSlots) {
-    issues.push(`RAM kit needs ${moduleCount} DIMM slots, but the motherboard lists ${dimmSlots}.`);
-  }
+  if (moduleCount === null || dimmSlots === null) unknown.push("RAM module count or motherboard DIMM slot count is unknown.");
+  else if (moduleCount > dimmSlots) issues.push(`RAM kit needs ${moduleCount} DIMM slots, but the motherboard lists ${dimmSlots}.`);
 
   const capacity = validNumber(ram.capacity_gb);
   const maxCapacity = validNumber(m.max_memory_gb);
-  if (capacity === null || maxCapacity === null) {
-    unknown.push("RAM capacity or motherboard maximum memory capacity is unknown.");
-  } else if (capacity > maxCapacity) {
-    issues.push(`RAM capacity ${capacity} GB exceeds the motherboard limit of ${maxCapacity} GB.`);
+  if (capacity === null || maxCapacity === null) unknown.push("RAM capacity or motherboard maximum memory capacity is unknown.");
+  else if (capacity > maxCapacity) issues.push(`RAM capacity ${capacity} GB exceeds the motherboard limit of ${maxCapacity} GB.`);
+
+  const coolerSockets = Array.isArray(cooler.socket_support) ? cooler.socket_support.map((value) => String(value).toUpperCase()) : [];
+  if (!coolerSockets.length || !cpu.socket) unknown.push("Cooler or CPU socket support is not recorded.");
+  else if (!coolerSockets.includes(String(cpu.socket).toUpperCase())) issues.push(`${cooler.name} does not list support for CPU socket ${cpu.socket}.`);
+
+  const coolerRating = validNumber(cooler.max_cpu_power_watts);
+  const cpuPower = validNumber(cpu.power_watts);
+  if (coolerRating === null || cpuPower === null) unknown.push("Cooler rating or CPU power data is unavailable.");
+  else if (cpuPower > coolerRating) issues.push(`Listed CPU power ${cpuPower} W exceeds the cooler rating of ${coolerRating} W.`);
+
+  if (cooler.cooling_type === "Air") {
+    const coolerHeight = validNumber(cooler.height_mm);
+    const caseHeight = validNumber(c.max_cooler_height_mm);
+    if (coolerHeight === null || caseHeight === null) unknown.push("Air-cooler height or case clearance is unknown.");
+    else if (coolerHeight > caseHeight) issues.push(`Cooler height ${coolerHeight} mm exceeds case clearance of ${caseHeight} mm.`);
+  } else if (cooler.cooling_type === "Liquid") {
+    const radiator = validNumber(cooler.radiator_size_mm);
+    const supported = Array.isArray(c.supported_radiator_sizes_mm) ? c.supported_radiator_sizes_mm.map(Number) : [];
+    if (radiator === null || !supported.length) unknown.push("Radiator size or case radiator support is not recorded.");
+    else if (!supported.includes(radiator)) issues.push(`${c.name} does not list support for a ${radiator} mm radiator.`);
+  } else unknown.push("Selected cooler type is not recognized by the fit checker.");
+
+  const driveType = String(storage.drive_type || "").trim();
+  if (driveType === "NVMe M.2") {
+    const slots = validNumber(m.m2_slots);
+    if (slots === null) unknown.push("Motherboard M.2 slot count is unknown.");
+    else if (slots < 1) issues.push(`${m.name} has no listed M.2 slot for the selected NVMe drive.`);
+  } else if (driveType === "2.5-inch SATA") {
+    const ports = validNumber(m.sata_ports);
+    const bays = validNumber(c.drive_bays_2_5);
+    if (ports === null || bays === null) unknown.push("Motherboard SATA ports or case 2.5-inch drive bays are unknown.");
+    else {
+      if (ports < 1) issues.push(`${m.name} has no listed SATA port for the selected drive.`);
+      if (bays < 1) issues.push(`${c.name} has no listed 2.5-inch drive bay for the selected SATA SSD.`);
+    }
+  } else unknown.push(`Storage interface ${driveType || "(unspecified)"} is not covered by the fit checker.`);
+
+  if (fans) {
+    const fanSize = validNumber(fans.size_mm);
+    const fanCount = validNumber(fans.count);
+    const supportedSizes = Array.isArray(c.supported_fan_sizes_mm) ? c.supported_fan_sizes_mm.map(Number) : [];
+    const maxFans = validNumber(c.max_case_fans);
+    if (fanSize === null || !supportedSizes.length) unknown.push("Case fan size support is not recorded.");
+    else if (!supportedSizes.includes(fanSize)) issues.push(`${c.name} does not list support for ${fanSize} mm case fans.`);
+    if (fanCount === null || maxFans === null) unknown.push("Fan pack count or case fan capacity is unknown.");
+    else if (fanCount > maxFans) issues.push(`Fan pack contains ${fanCount} fans, exceeding the case's listed capacity of ${maxFans}.`);
   }
 
-  const cpuPower = validNumber(cpu.power_watts);
   const gpuPower = validNumber(gpu.power_watts);
   const psuPower = validNumber(psu.wattage);
   let estimatedPower = null;
-
-  if (cpuPower === null || gpuPower === null || psuPower === null) {
-    unknown.push("Power data is missing or invalid.");
-  } else {
-    // Approximate CPU + GPU + 100 W for the remaining system.
+  if (cpuPower === null || gpuPower === null || psuPower === null) unknown.push("Power data is missing or invalid.");
+  else {
     estimatedPower = cpuPower + gpuPower + 100;
-
-    if (estimatedPower > psuPower) {
-      issues.push(
-        `Estimated power ${estimatedPower} W exceeds PSU capacity ${psuPower} W.`
-      );
-    } else if (estimatedPower > psuPower * 0.8) {
-      unknown.push(
-        "Power headroom is limited; verify manufacturer PSU recommendations."
-      );
-    }
+    if (estimatedPower > psuPower) issues.push(`Estimated power ${estimatedPower} W exceeds PSU capacity ${psuPower} W.`);
+    else if (estimatedPower > psuPower * 0.8) unknown.push("Power headroom is limited; verify manufacturer PSU recommendations.");
   }
 
   const formFactor = String(m.form_factor || "").trim().toUpperCase();
   const supportedFormFactors = Array.isArray(c.supported_form_factors)
-    ? c.supported_form_factors.map((value) => String(value).trim().toUpperCase()).filter(Boolean)
-    : [];
-
-  if (!formFactor) {
-    unknown.push("Motherboard form-factor information is missing.");
-  } else if (!supportedFormFactors.length) {
-    unknown.push("Case motherboard form-factor support is not recorded; verify fit.");
-  } else if (!supportedFormFactors.includes(formFactor)) {
-    issues.push(`${m.form_factor} motherboard is not listed as supported by ${c.name}.`);
-  }
+    ? c.supported_form_factors.map((value) => String(value).trim().toUpperCase()).filter(Boolean) : [];
+  if (!formFactor) unknown.push("Motherboard form-factor information is missing.");
+  else if (!supportedFormFactors.length) unknown.push("Case motherboard form-factor support is not recorded; verify fit.");
+  else if (!supportedFormFactors.includes(formFactor)) issues.push(`${m.form_factor} motherboard is not listed as supported by ${c.name}.`);
 
   let status = "PASS";
   if (issues.length) status = "FAIL";
   else if (unknown.length) status = "CHECK";
-
-  return {
-    status,
-    issues: [...issues, ...unknown],
-    estimatedPower
-  };
+  return { status, issues: [...issues, ...unknown], estimatedPower };
 }
 
 function previewCompatibility(category, item) {
@@ -1360,10 +1437,10 @@ function updateSpecsAndCompatibility() {
   setSpec("selected-case", "Case", selected.cases?.name || "Not selected");
   setSpec("selected-motherboard", "Motherboard", selected.motherboards?.name || "Not selected");
   setSpec("selected-cpu", "CPU", selected.cpus?.name || "Not selected");
-  // Cooler and storage remain planned categories; RAM is now selectable.
-  setSpec("selected-cooler", "CPU cooler", "Not selectable yet");
+  setSpec("selected-cooler", "CPU cooler", selected.coolers?.name || "Not selected");
   setSpec("selected-ram", "Memory (RAM)", selected.ram ? `${selected.ram.name} · ${selected.ram.capacity_gb} GB` : "Not selected");
-  setSpec("selected-storage", "Storage", "Not selectable yet");
+  setSpec("selected-storage", "Storage", selected.storage?.name || "Not selected");
+  setSpec("selected-fans", "Case fans", selected.fans?.name || "Not selected (optional)");
   setSpec("selected-gpu", "GPU", selected.gpus?.name || "Not selected");
   setSpec("selected-psu", "PSU", selected.psus?.name || "Not selected");
 
@@ -1425,6 +1502,35 @@ function validateParts(data) {
           throw new Error(`Invalid RAM specifications in ${item.id}.`);
         }
       }
+      if (category === "coolers") {
+        const validSockets = Array.isArray(item.socket_support) && item.socket_support.length > 0;
+        const validRating = Number.isFinite(Number(item.max_cpu_power_watts)) && Number(item.max_cpu_power_watts) > 0;
+        const validCooling = item.cooling_type === "Air"
+          ? Number(item.height_mm) > 0
+          : item.cooling_type === "Liquid" && Number(item.radiator_size_mm) > 0;
+        const fanCount = Number(item.fan_count);
+        const validFanCount = Number.isFinite(fanCount) && fanCount > 0 && (item.cooling_type === "Air" ? fanCount <= 2 : fanCount <= 3);
+        if (!validSockets || !validRating || !validCooling || !validFanCount) throw new Error(`Invalid cooler specifications in ${item.id}.`);
+      }
+      if (category === "storage" && (! ["NVMe M.2", "2.5-inch SATA"].includes(item.drive_type) || Number(item.capacity_gb) <= 0 || Number(item.length_mm) <= 0)) {
+        throw new Error(`Invalid storage specifications in ${item.id}.`);
+      }
+      if (category === "fans" && (!Number.isFinite(Number(item.size_mm)) || Number(item.size_mm) <= 0 || !Number.isFinite(Number(item.count)) || Number(item.count) <= 0 || Number(item.count) > 4 || typeof item.rgb !== "boolean")) {
+        throw new Error(`Invalid case-fan specifications in ${item.id}.`);
+      }
+      if (category === "motherboards" && (!Number.isFinite(Number(item.m2_slots)) || Number(item.m2_slots) < 0 || !Number.isFinite(Number(item.sata_ports)) || Number(item.sata_ports) < 0)) {
+        throw new Error(`Missing storage connectivity in motherboard ${item.id}.`);
+      }
+      if (category === "cases" && (
+        !Array.isArray(item.supported_radiator_sizes_mm) || !item.supported_radiator_sizes_mm.length ||
+        !item.supported_radiator_sizes_mm.every((value) => Number.isFinite(Number(value)) && Number(value) > 0) ||
+        !Array.isArray(item.supported_fan_sizes_mm) || !item.supported_fan_sizes_mm.length ||
+        !item.supported_fan_sizes_mm.every((value) => Number.isFinite(Number(value)) && Number(value) > 0) ||
+        !Number.isFinite(Number(item.max_case_fans)) || Number(item.max_case_fans) <= 0 ||
+        !Number.isFinite(Number(item.drive_bays_2_5)) || Number(item.drive_bays_2_5) < 0
+      )) {
+        throw new Error(`Missing cooler, fan or drive-bay fit data in case ${item.id}.`);
+      }
 
       if (category === "cases") {
         if (!Array.isArray(item.supported_form_factors) || !item.supported_form_factors.length ||
@@ -1454,7 +1560,10 @@ function restoreBuildSnapshot(snapshot) {
     cpus: "selected-cpu",
     ram: "selected-ram",
     gpus: "selected-gpu",
-    psus: "selected-psu"
+    psus: "selected-psu",
+    coolers: "selected-cooler",
+    storage: "selected-storage",
+    fans: "selected-fans"
   };
   const restored = {};
 
@@ -1479,6 +1588,7 @@ function restoreBuildSnapshot(snapshot) {
     // Older snapshots predate selectable RAM. Give those builds the catalogue's
     // default kit rather than making otherwise valid snapshots unrestorable.
     if (!part && category === "ram" && !savedId) part = partsData.ram[0];
+    if (!part && ["coolers", "storage", "fans"].includes(category) && !savedId) part = partsData[category][0];
     if (!part) return false;
     restored[category] = part;
   }

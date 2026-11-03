@@ -62,6 +62,7 @@ for (const file of ["style.css", "legal.css"]) {
 const appSource = read("app.js");
 const registrySource = read("js/model-registry.js");
 const workspaceSource = read("js/workspace.js");
+const supabaseSource = read("js/supabase-catalogue.js");
 assert.match(appSource, /getSelectedPartIds/ , "Builder must expose selected part IDs for snapshots");
 assert.match(appSource, /restoreBuildSnapshot/ , "Builder must expose a restore API");
 assert.match(appSource, /previewCompatibility/ , "Component options must preview compatibility");
@@ -93,12 +94,18 @@ assert.ok(fs.existsSync(path.join(root, "assets/models/ram.glb")), "RAM GLB asse
 assert.ok(fs.existsSync(path.join(root, "assets/models/storage.glb")), "Storage GLB asset is missing");
 assert.match(appSource, /realisticMotherboardAsset/, "Motherboard GLB must be used when available");
 assert.match(appSource, /realisticCoolerAsset/, "AIO cooler GLB must be used when available");
-assert.match(appSource, /anchorOffset: \[0\.517, -0\.589, -0\.529\]/, "Cooler pump must be anchored to the CPU mount");
+assert.match(appSource, /anchorOffset: \[0\.517, -0\.589, -0\.529\]/, "The selected 240 mm AIO reference mesh must retain its CPU-mount anchor");
 assert.match(appSource, /Object_78/, "PSU model must hide its known stray mesh node");
 assert.ok(fs.existsSync(path.join(root, "vendor/MESHOPT-LICENSE.txt")), "Meshopt decoder license notice is missing");
 assert.match(read("assets/models/README.md"), /CC BY 4\.0/, "3D asset attribution must record its license");
 assert.match(index, /model-attribution/, "Third-party 3D assets must be credited on the site");
 assert.match(index, /data-category="ram"/, "RAM must be available in the hardware selector");
+for (const category of ["coolers", "storage", "fans"]) assert.match(index, new RegExp(`data-category="${category}"`), `${category} must be available in the hardware selector`);
+for (const marker of ["selected.coolers", "selected.storage", "selected.fans", "function buildCooler()", "function buildStorage()", "function buildFans()", "supported_radiator_sizes_mm", "m2_slots", "sata_ports"]) assert.ok(appSource.includes(marker), `Builder is missing selected component behavior: ${marker}`);
+assert.match(appSource, /setSpec\(\"selected-fans\"/, "The selected fan pack must appear in the build summary");
+assert.match(workspaceSource, /selected-fans/, "Saved snapshots must include the selected fan pack");
+for (const category of ["coolers", "storage", "fans"]) assert.ok(supabaseSource.includes(`\"${category}\"`), `Supabase adapter must query ${category}`);
+assert.match(supabaseSource, /requiredAccessoryFields/, "Supabase rows must be guarded by complete accessory fit metadata");
 assert.match(appSource, /Memory type mismatch/, "RAM compatibility must compare memory generations");
 assert.match(appSource, /Object\.assign\(selected, restored\)/, "Restoring a build must apply all selected parts");
 assert.match(workspaceSource, /schemaVersion:2/, "New snapshots must use schema version 2");
@@ -108,12 +115,15 @@ assert.match(workspaceSource, /textContent="Delete"/, "Saved snapshots must expo
 
 const parts = JSON.parse(read("parts.json"));
 const requirements = {
-  cases: ["id", "name", "max_gpu_length_mm", "max_cooler_height_mm", "supported_form_factors"],
-  motherboards: ["id", "name", "socket", "form_factor", "memory_type", "memory_slots", "max_memory_gb"],
+  cases: ["id", "name", "max_gpu_length_mm", "max_cooler_height_mm", "supported_form_factors", "supported_radiator_sizes_mm", "supported_fan_sizes_mm", "max_case_fans", "drive_bays_2_5"],
+  motherboards: ["id", "name", "socket", "form_factor", "memory_type", "memory_slots", "max_memory_gb", "m2_slots", "sata_ports"],
   cpus: ["id", "name", "socket", "power_watts"],
   gpus: ["id", "name", "length_mm", "power_watts"],
   psus: ["id", "name", "wattage"],
   ram: ["id", "name", "memory_type", "capacity_gb", "modules", "speed_mhz"],
+  coolers: ["id", "name", "cooling_type", "socket_support", "fan_count", "max_cpu_power_watts"],
+  storage: ["id", "name", "drive_type", "capacity_gb", "length_mm"],
+  fans: ["id", "name", "size_mm", "rgb", "count"],
 };
 assert.deepEqual(Object.keys(parts).sort(), Object.keys(requirements).sort(), "Unexpected parts catalogue categories");
 for (const [category, fields] of Object.entries(requirements)) {
@@ -123,7 +133,7 @@ for (const [category, fields] of Object.entries(requirements)) {
     for (const field of fields) assert.ok(part[field] !== undefined && part[field] !== null && part[field] !== "", `${category}[${index}] missing ${field}`);
     assert.ok(!ids.has(part.id), `${category}: duplicate id ${part.id}`);
     ids.add(part.id);
-    for (const field of fields.filter((key) => /(?:watts|wattage|_mm|length_mm|memory_slots|max_memory_gb|capacity_gb|modules|speed_mhz)$/.test(key))) {
+    for (const field of fields.filter((key) => !Array.isArray(part[key]) && /(?:watts|wattage|_mm|length_mm|memory_slots|max_memory_gb|capacity_gb|modules|speed_mhz|slots|ports|count)$/.test(key))) {
       assert.ok(Number.isFinite(Number(part[field])) && Number(part[field]) > 0, `${category}[${index}].${field} must be positive numeric data`);
     }
   }
@@ -131,6 +141,10 @@ for (const [category, fields] of Object.entries(requirements)) {
 
 const knownFormFactors = new Set(["ATX", "MICRO-ATX", "MINI-ITX"]);
 for (const item of parts.cases) {
+  assert.ok(Array.isArray(item.supported_radiator_sizes_mm) && item.supported_radiator_sizes_mm.length > 0 && item.supported_radiator_sizes_mm.every((value) => Number(value) > 0),
+    `cases.${item.id}: supported_radiator_sizes_mm must contain positive sizes`);
+  assert.ok(Array.isArray(item.supported_fan_sizes_mm) && item.supported_fan_sizes_mm.length > 0 && item.supported_fan_sizes_mm.every((value) => Number(value) > 0),
+    `cases.${item.id}: supported_fan_sizes_mm must contain positive sizes`);
   assert.ok(Array.isArray(item.supported_form_factors) && item.supported_form_factors.length > 0,
     `cases.${item.id}: supported_form_factors must be a non-empty array`);
   for (const value of item.supported_form_factors) {

@@ -19,6 +19,9 @@ function check(caseId, boardId, cpuId, gpuId, psuId, ramId = "ddr5-32gb-6000") {
     gpus: parts.gpus.find((x) => x.id === gpuId),
     ram: parts.ram.find((x) => x.id === ramId),
     psus: parts.psus.find((x) => x.id === psuId),
+    coolers: parts.coolers.find((x) => x.id === "aio-240"),
+    storage: parts.storage.find((x) => x.id === "nvme-1tb"),
+    fans: parts.fans.find((x) => x.id === "fan-120-argb"),
   };
   const context = { selected, validNumber: (value) => value === "" || value == null || !Number.isFinite(Number(value)) ? null : Number(value) };
   vm.createContext(context);
@@ -43,6 +46,9 @@ function checkContext(caseId, boardId, cpuId, gpuId, psuId, ramId = "ddr5-32gb-6
     gpus: parts.gpus.find((x) => x.id === gpuId),
     ram: parts.ram.find((x) => x.id === ramId),
     psus: parts.psus.find((x) => x.id === psuId),
+    coolers: parts.coolers.find((x) => x.id === "aio-240"),
+    storage: parts.storage.find((x) => x.id === "nvme-1tb"),
+    fans: parts.fans.find((x) => x.id === "fan-120-argb"),
   };
   const context = { selected, validNumber: (value) => value === "" || value == null || !Number.isFinite(Number(value)) ? null : Number(value) };
   vm.createContext(context);
@@ -68,3 +74,34 @@ dimmMismatch.selected.motherboards.memory_slots = 1;
 assert.equal(dimmMismatch.runCheck().status, "FAIL");
 assert.ok(dimmMismatch.runCheck().issues.some((x) => x.includes("needs 2 DIMM slots")));
 console.log("RAM compatibility tests passed: generation, capacity and DIMM-slot constraints.");
+
+const coolerFit = checkContext("compact-itx", "b650-itx", "ryzen7-7800x3d", "rtx4070", "psu-650w");
+coolerFit.selected.coolers = parts.coolers.find((x) => x.id === "tower-air-120");
+assert.equal(coolerFit.runCheck().status, "FAIL", "158 mm air cooler should exceed the 155 mm compact-case limit");
+assert.ok(coolerFit.runCheck().issues.some((x) => x.includes("Cooler height 158 mm exceeds case clearance of 155 mm")));
+const radiatorFit = checkContext("compact-itx", "b650-itx", "ryzen7-7800x3d", "rtx4070", "psu-650w");
+radiatorFit.selected.coolers = parts.coolers.find((x) => x.id === "aio-360");
+assert.equal(radiatorFit.runCheck().status, "FAIL", "compact case should reject an unsupported 360 mm radiator");
+const coolerRating = checkContext("mid-tower", "x670-atx", "ryzen9-7950x", "rtx4070", "psu-850w");
+coolerRating.selected.coolers.max_cpu_power_watts = 100;
+assert.ok(coolerRating.runCheck().issues.some((x) => x.includes("exceeds the cooler rating")));
+const nvmeSlots = checkContext("mid-tower", "x670-atx", "ryzen7-7800x3d", "rtx4070", "psu-650w");
+nvmeSlots.selected.motherboards.m2_slots = 0;
+assert.ok(nvmeSlots.runCheck().issues.some((x) => x.includes("no listed M.2 slot")));
+const sataBays = checkContext("mid-tower", "x670-atx", "ryzen7-7800x3d", "rtx4070", "psu-650w");
+sataBays.selected.storage = parts.storage.find((x) => x.id === "sata-2tb");
+sataBays.selected.cases.drive_bays_2_5 = 0;
+assert.ok(sataBays.runCheck().issues.some((x) => x.includes("no listed 2.5-inch drive bay")));
+const fanFit = checkContext("compact-itx", "b650-itx", "ryzen7-7800x3d", "rtx4070", "psu-650w");
+fanFit.selected.fans.size_mm = 140;
+assert.ok(fanFit.runCheck().issues.some((x) => x.includes("does not list support for 140 mm case fans")));
+console.log("Cooler, storage and case-fan compatibility tests passed.");
+
+const fanCapacity = checkContext("compact-itx", "b650-itx", "ryzen7-7800x3d", "rtx4070", "psu-650w");
+fanCapacity.selected.fans.count = 5;
+assert.ok(fanCapacity.runCheck().issues.some((x) => x.includes("exceeding the case's listed capacity of 4")));
+const sataPorts = checkContext("mid-tower", "x670-atx", "ryzen7-7800x3d", "rtx4070", "psu-650w");
+sataPorts.selected.storage = parts.storage.find((x) => x.id === "sata-2tb");
+sataPorts.selected.motherboards.sata_ports = 0;
+assert.ok(sataPorts.runCheck().issues.some((x) => x.includes("no listed SATA port")));
+console.log("Fan capacity and SATA port compatibility tests passed.");
