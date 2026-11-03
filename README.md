@@ -13,6 +13,10 @@ RigCraft 3D is a browser-based PC configurator with an interactive Three.js asse
 - Save up to 20 build snapshots in browser local storage, restore a saved component selection, delete saved snapshots, and export a snapshot as JSON.
 - Read the Privacy Policy and Terms and Conditions from the site footer.
 
+## On-device performance testing
+
+Use the Device test control on the live site or a local build to run a 30-second browser benchmark. Rotate the 3D model during the test, then export the JSON report. It records rendered FPS from the app renderer, animation-frame timing percentiles, WebGL resource counts, browser/device hints and JavaScript heap estimates when supported. Reports are generated locally and are not uploaded. navigator.deviceMemory and performance.memory are browser-provided estimates; they do not reveal total physical RAM on every device. Cloud/browser emulation and CI checks are not substitutes for testing on a real phone or laptop.
+
 ## Current limitations
 
 - The 3D geometry is illustrative, not manufacturer CAD or a guarantee of physical fit.

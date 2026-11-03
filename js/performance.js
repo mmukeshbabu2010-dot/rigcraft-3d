@@ -19,6 +19,11 @@
     get profile() { return active; },
     get settings() { return profiles[active]; },
     shouldSkipRemoteCatalogue() { return active === 'low' || constrainedNetwork; },
+    getDiagnostics() {
+      const rendererStats = [];
+      renderers.forEach((renderer) => { if (renderer.getRigCraftDiagnostics) rendererStats.push(renderer.getRigCraftDiagnostics()); });
+      return { profile: active, settings: Object.assign({}, profiles[active]), deviceMemoryGB: Number(root.navigator.deviceMemory) || null, logicalCores: Number(root.navigator.hardwareConcurrency) || null, connection: connection ? { effectiveType: connection.effectiveType || null, saveData: !!connection.saveData, downlinkMbps: Number(connection.downlink) || null } : null, renderers: rendererStats };
+    },
     setProfile(value) {
       selected = profiles[value] ? value : 'auto';
       active = selected === 'auto' ? (detectedLow ? 'low' : 'balanced') : selected;
@@ -60,13 +65,20 @@
       } catch (_) { /* Older engines retain their native shadow setting. */ }
       const originalRender = renderer.render.bind(renderer);
       let lastRender = 0;
+      let renderCount = 0;
       renderer.render = function (scene, camera) {
         if (root.document.visibilityState === 'hidden') return;
         const interval = state.settings.frameInterval;
         const now = root.performance.now();
         if (interval && now - lastRender < interval) return;
         lastRender = now;
-        return originalRender(scene, camera);
+        const result = originalRender(scene, camera);
+        renderCount += 1;
+        return result;
+      };
+      renderer.getRigCraftDiagnostics = function () {
+        const info = renderer.info || {};
+        return { renderCount, calls: info.render && info.render.calls || 0, triangles: info.render && info.render.triangles || 0, geometries: info.memory && info.memory.geometries || 0, textures: info.memory && info.memory.textures || 0 };
       };
       renderer.applyRigCraftProfile = function () {
         originalSetPixelRatio(Math.min(root.devicePixelRatio || 1, state.settings.pixelRatio));
