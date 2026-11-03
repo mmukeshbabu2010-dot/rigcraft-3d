@@ -8,7 +8,7 @@
 
   const SUPABASE_URL = "https://hscpgrscixjjedhdmwwz.supabase.co";
   const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_dSPc1N_4Ov8OxIXlftw9-g_Orr4rpCg";
-  const CATEGORIES = ["cases", "motherboards", "cpus", "gpus", "psus"];
+  const CATEGORIES = ["cases", "motherboards", "cpus", "ram", "gpus", "psus"];
   const nativeFetch = window.fetch.bind(window);
 
   function mapPart(row) {
@@ -57,7 +57,21 @@
       const bundled = await response.clone().json();
       const remote = await loadVerifiedParts();
       for (const category of CATEGORIES) {
-        if (remote[category].length) bundled[category] = remote[category];
+        if (!remote[category].length) continue;
+        const mapped = remote[category].map(mapPart);
+        if (category === "ram") {
+          // Do not replace the working bundled catalogue with incomplete remote
+          // rows: the builder needs all four fields for RAM compatibility checks.
+          const complete = mapped.filter((part) =>
+            typeof part.memory_type === "string" && part.memory_type.trim() &&
+            Number.isFinite(Number(part.capacity_gb)) && Number(part.capacity_gb) > 0 &&
+            Number.isFinite(Number(part.modules)) && Number(part.modules) > 0 &&
+            Number.isFinite(Number(part.speed_mhz)) && Number(part.speed_mhz) > 0
+          );
+          if (complete.length) bundled[category] = complete;
+        } else {
+          bundled[category] = mapped;
+        }
       }
       return new Response(JSON.stringify(bundled), {
         status: 200,
