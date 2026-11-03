@@ -98,6 +98,8 @@ assert.match(appSource, /Object_78/, "PSU model must hide its known stray mesh n
 assert.ok(fs.existsSync(path.join(root, "vendor/MESHOPT-LICENSE.txt")), "Meshopt decoder license notice is missing");
 assert.match(read("assets/models/README.md"), /CC BY 4\.0/, "3D asset attribution must record its license");
 assert.match(index, /model-attribution/, "Third-party 3D assets must be credited on the site");
+assert.match(index, /data-category="ram"/, "RAM must be available in the hardware selector");
+assert.match(appSource, /Memory type mismatch/, "RAM compatibility must compare memory generations");
 assert.match(appSource, /Object\.assign\(selected, restored\)/, "Restoring a build must apply all selected parts");
 assert.match(workspaceSource, /schemaVersion:2/, "New snapshots must use schema version 2");
 assert.match(workspaceSource, /selectionIds:window\.RigCraft3D\?\.getSelectedPartIds\(\)/, "Snapshots must save stable part IDs");
@@ -107,10 +109,11 @@ assert.match(workspaceSource, /textContent="Delete"/, "Saved snapshots must expo
 const parts = JSON.parse(read("parts.json"));
 const requirements = {
   cases: ["id", "name", "max_gpu_length_mm", "max_cooler_height_mm", "supported_form_factors"],
-  motherboards: ["id", "name", "socket", "form_factor"],
+  motherboards: ["id", "name", "socket", "form_factor", "memory_type", "memory_slots", "max_memory_gb"],
   cpus: ["id", "name", "socket", "power_watts"],
   gpus: ["id", "name", "length_mm", "power_watts"],
   psus: ["id", "name", "wattage"],
+  ram: ["id", "name", "memory_type", "capacity_gb", "modules", "speed_mhz"],
 };
 assert.deepEqual(Object.keys(parts).sort(), Object.keys(requirements).sort(), "Unexpected parts catalogue categories");
 for (const [category, fields] of Object.entries(requirements)) {
@@ -120,7 +123,7 @@ for (const [category, fields] of Object.entries(requirements)) {
     for (const field of fields) assert.ok(part[field] !== undefined && part[field] !== null && part[field] !== "", `${category}[${index}] missing ${field}`);
     assert.ok(!ids.has(part.id), `${category}: duplicate id ${part.id}`);
     ids.add(part.id);
-    for (const field of fields.filter((key) => /(?:watts|wattage|_mm|length_mm)$/.test(key))) {
+    for (const field of fields.filter((key) => /(?:watts|wattage|_mm|length_mm|memory_slots|max_memory_gb|capacity_gb|modules|speed_mhz)$/.test(key))) {
       assert.ok(Number.isFinite(Number(part[field])) && Number(part[field]) > 0, `${category}[${index}].${field} must be positive numeric data`);
     }
   }
@@ -146,7 +149,7 @@ assert.match(htmlFiles.map((file) => fs.readFileSync(path.join(root, file), "utf
 const inspectorPath = path.join(root, "js/component-inspector.js");
 assert.ok(fs.existsSync(inspectorPath), "Component inspector module is missing");
 const inspectorSource = fs.readFileSync(inspectorPath, "utf8");
-for (const marker of ["component-detail-canvas", "MutationObserver", "inspector-fidelity", "inspector-reset", "OrbitControls", "assets/models/"]) {
+for (const marker of ["component-detail-canvas", "MutationObserver", "inspector-fidelity", "inspector-reset", "OrbitControls", "assets/models/", "assets/models/ram.glb"]) {
   assert.ok(inspectorSource.includes(marker), `Component inspector is missing ${marker}`);
 }
 assert.match(fs.readFileSync(path.join(root, "style.css"), "utf8"), /\.inspector-stage/, "Component inspector styles are missing");
