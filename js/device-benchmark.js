@@ -50,6 +50,8 @@
       const frameIntervals = []; let previousFrame = null; let previousRenderCount = 0; let previousAllRenderCount = 0;
       const renderCounts = []; let lastSample = started;
       const initial = snapshot();
+      previousRenderCount = initial.graphics && initial.graphics.renderers && initial.graphics.renderers[0] ? (initial.graphics.renderers[0].renderCount || 0) : 0;
+      previousAllRenderCount = initial.graphics && initial.graphics.renderers ? initial.graphics.renderers.reduce((sum, r) => sum + (r.renderCount || 0), 0) : 0;
       status.textContent = 'Running… rotate the model while measurements are collected.';
       results.textContent = 'Collecting 30 seconds of frame pacing, rendered frames and memory estimates…';
       function frame(now) {
