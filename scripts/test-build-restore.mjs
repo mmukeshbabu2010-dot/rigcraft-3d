@@ -8,7 +8,7 @@ const end = app.indexOf("\nwindow.RigCraft3D = Object.freeze", start);
 assert.ok(start >= 0 && end > start, "Build restore API functions must exist");
 const apiSource = app.slice(start, end);
 const parts = JSON.parse(fs.readFileSync("parts.json", "utf8"));
-const categories = ["cases", "motherboards", "cpus", "ram", "gpus", "psus"];
+const categories = ["cases", "motherboards", "cpus", "ram", "gpus", "psus", "coolers", "storage", "fans"];
 const specIds = {
   cases: "selected-case",
   motherboards: "selected-motherboard",
@@ -16,6 +16,9 @@ const specIds = {
   ram: "selected-ram",
   gpus: "selected-gpu",
   psus: "selected-psu",
+  coolers: "selected-cooler",
+  storage: "selected-storage",
+  fans: "selected-fans",
 };
 const initial = Object.fromEntries(categories.map((category) => [category, parts[category][0]]));
 const desired = {
@@ -25,6 +28,9 @@ const desired = {
   ram: "ddr5-32gb-6000",
   gpus: "rtx4070",
   psus: "psu-650w",
+  coolers: "aio-240",
+  storage: "nvme-2tb",
+  fans: "fan-140-black",
 };
 function makeContext(loaded = true) {
   const selected = { ...initial };
@@ -56,7 +62,7 @@ const legacy = makeContext();
 const visibleSpecs = Object.fromEntries(categories.map((category) => {
   const id = specIds[category];
   const chosen = parts[category].find((item) => item.id === desired[category]);
-  const label = { cases: "Case", motherboards: "Motherboard", cpus: "CPU", ram: "Memory (RAM)", gpus: "GPU", psus: "PSU" }[category];
+  const label = { cases: "Case", motherboards: "Motherboard", cpus: "CPU", ram: "Memory (RAM)", gpus: "GPU", psus: "PSU", coolers: "CPU cooler", storage: "Storage", fans: "Case fans" }[category];
   return [id, `${label}: ${chosen.name}`];
 }));
 assert.equal(legacy.context.api.restoreBuildSnapshot({ visibleSpecs }), true, "legacy name-based snapshots should restore");
@@ -71,6 +77,7 @@ const preRamVisibleSpecs = Object.fromEntries(["cases", "motherboards", "cpus", 
 }));
 assert.equal(preRamLegacy.context.api.restoreBuildSnapshot({ visibleSpecs: preRamVisibleSpecs }), true, "pre-RAM legacy snapshots should still restore");
 assert.equal(preRamLegacy.selected.ram.id, parts.ram[0].id, "pre-RAM snapshots should receive the default RAM kit");
+for (const category of ["coolers", "storage", "fans"]) assert.equal(preRamLegacy.selected[category].id, parts[category][0].id, `legacy snapshots should receive the default ${category} item`);
 
 const incomplete = makeContext();
 const before = Object.fromEntries(categories.map((category) => [category, incomplete.selected[category].id]));

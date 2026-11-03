@@ -146,7 +146,7 @@
     box(g,[.42,.12,.018],[0,-.29,-.66],materials.metal);
   }
   const assetMap={motherboards:"assets/models/motherboard.glb",cpus:"assets/models/cpu.glb",ram:"assets/models/ram.glb",psus:"assets/models/psu.glb"};
-  const fidelityText={cases:"Procedural case illustration",motherboards:"Reference motherboard mesh",cpus:"Reference CPU mesh",gpus:"Procedural GPU model",ram:"Reference RAM module mesh · kit specs from catalogue",psus:"Reference PSU mesh"};
+  const fidelityText={cases:"Procedural case illustration",motherboards:"Reference motherboard mesh",cpus:"Reference CPU mesh",gpus:"Procedural GPU model",ram:"Reference RAM module mesh · kit specs from catalogue",psus:"Reference PSU mesh",coolers:"Procedural cooler illustration · catalogue fit data",storage:"Procedural storage illustration · catalogue interface data",fans:"Procedural case-fan pack · catalogue size and count"};
   function fitModel(model) {
     model.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(model);const size=bounds.getSize(new THREE.Vector3());const center=bounds.getCenter(new THREE.Vector3());
     model.position.sub(center);const span=Math.max(size.x,size.y,size.z)||1;model.scale.multiplyScalar(1.6/span);model.updateMatrixWorld(true);orbit.add(model);
@@ -174,18 +174,34 @@
     if(category==="gpus")facts.push(`${data.length_mm??"?"} mm length`,`${data.power_watts??"?"} W listed power`,`${data.size_x??"?"} size class`);
     if(category==="ram")facts.push(`${data.capacity_gb??"?"} GB total`,`${data.memory_type||"Type n/a"} · ${data.speed_mhz??"?"} MT/s`,`${data.modules??"?"} modules`);
     if(category==="psus")facts.push(`${data.wattage??"?"} W capacity`);
+    if(category==="coolers")facts.push(data.cooling_type||"Cooling type n/a",data.cooling_type==="Liquid"?`${data.radiator_size_mm??"?"} mm radiator`:`${data.height_mm??"?"} mm height`,`${data.max_cpu_power_watts??"?"} W cooler rating`);
+    if(category==="storage")facts.push(data.drive_type||"Interface n/a",`${data.capacity_gb??"?"} GB capacity`);
+    if(category==="fans")facts.push(`${data.count??"?"} × ${data.size_mm??"?"} mm`,data.rgb?"ARGB lighting":"No RGB lighting");
     facts.filter(Boolean).forEach(f=>factRow.appendChild(makeFact(f)));
     resetRoot();
     $("inspector-fidelity").textContent=fidelityText[category]||"Illustrative model";
-    $("inspector-disclaimer").textContent=category==="motherboards"?"Reference board mesh is not an exact rendering of every selected model. Listed specs come from the prototype catalogue.":category==="cpus"||category==="psus"?"Reference mesh is a visual example, not a SKU-specific rendering. Dimensions and details may differ.":category==="gpus"?"GPU preview is generated from the selected card dimensions and fan layout; it is not manufacturer CAD.":"Case is a procedural visual study, not exact manufacturer CAD. Fit limits are illustrative.";
+    $("inspector-disclaimer").textContent=category==="motherboards"?"Reference board mesh is not an exact rendering of every selected model. Listed specs come from the prototype catalogue.":category==="cpus"||category==="psus"?"Reference mesh is a visual example, not a SKU-specific rendering. Dimensions and details may differ.":category==="gpus"?"GPU preview is generated from the selected card dimensions and fan layout; it is not manufacturer CAD.":category==="coolers"||category==="storage"||category==="fans"?"Accessory preview is procedural and illustrative. Catalogue fit data is prototype data, not a manufacturer guarantee.":"Case is a procedural visual study, not exact manufacturer CAD. Fit limits are illustrative.";
     const asset=assetMap[category]||null;
     const useBundledGpu=false;
     if(useBundledGpu){loader.load("assets/models/gpu.glb",g=>{if(key!==currentKey)return;resetRoot();const model=THREE.SkeletonUtils?THREE.SkeletonUtils.clone(g.scene):g.scene.clone(true);fitModel(model);$("inspector-fidelity").textContent="Reference GPU mesh · SKU differences possible";$("inspector-disclaimer").textContent="Bundled GPU reference geometry; this is not verified as an exact rendering of the selected SKU.";},error=>{if(key!==currentKey)return;console.error("RigCraft inspector: GPU reference failed to load; showing procedural preview.",error);fallback(category);$("inspector-fidelity").textContent="Procedural GPU fallback";});}
     else if(asset){loader.load(asset,g=>{if(key!==currentKey)return;resetRoot();const model=THREE.SkeletonUtils?THREE.SkeletonUtils.clone(g.scene):g.scene.clone(true);fitModel(model);$("inspector-fidelity").textContent="Reference mesh loaded";},error=>{if(key!==currentKey)return;console.error(`RigCraft inspector: ${category} reference failed to load from ${asset}; showing procedural preview.`,error);fallback(category);$("inspector-fidelity").textContent="Procedural fallback · reference unavailable";});}
     else fallback(category);
   }
+  function buildCooler() {
+    const liquid=partData.cooling_type==="Liquid";
+    if(liquid){box(orbit,[1.55,.18,.72],[0,.65,0],materials.dark);const n=Number(partData.fan_count)||2;for(let i=0;i<n;i++)addFan(orbit,[-.48+i*(.96/Math.max(1,n-1)),.79,0],.22);box(orbit,[.38,.32,.38],[-.95,-.12,0],materials.metal);}
+    else {box(orbit,[.72,1.35,.72],[0,0,0],materials.dark);for(let i=0;i<10;i++)box(orbit,[.78,.035,.76], [0,-.58+i*.13,0],materials.metal);addFan(orbit,[.43,0,0],.28);}
+  }
+  function buildStorage() {
+    if(partData.drive_type==="2.5-inch SATA"){box(orbit,[1.5,.25,1.05],[0,0,0],materials.shell);box(orbit,[1.4,.05,.95],[0,.16,0],materials.metal);}
+    else {box(orbit,[.22,.18,1.6],[0,0,0],materials.dark);for(let i=0;i<4;i++)box(orbit,[.2,.12,.25],[0,.12,-.5+i*.35],materials.accent);}
+  }
+  function buildFanPack() {
+    const n=Math.max(1,Math.min(4,Number(partData.count)||3));const radius=.23*(Number(partData.size_mm)||120)/120;
+    for(let i=0;i<n;i++){const fan=new THREE.Group();orbit.add(fan);const z=(i-(n-1)/2)*.72;addFan(fan,[0,0,z],radius);if(!partData.rgb)fan.traverse(o=>{if(o.material===materials.accent)o.visible=false;});}
+  }
   function fallback(category) {
-    resetRoot();if(category==="cases")buildCase();else if(category==="gpus")buildGpu();else if(category==="motherboards")buildBoard();else if(category==="cpus")buildCpu();else if(category==="ram")buildRam();else buildPsu();fitProcedural();
+    resetRoot();if(category==="cases")buildCase();else if(category==="gpus")buildGpu();else if(category==="motherboards")buildBoard();else if(category==="cpus")buildCpu();else if(category==="ram")buildRam();else if(category==="coolers")buildCooler();else if(category==="storage")buildStorage();else if(category==="fans")buildFanPack();else buildPsu();fitProcedural();
   }
   function resize() { const r=canvas.getBoundingClientRect();const w=Math.max(1,Math.floor(r.width)),h=Math.max(1,Math.floor(r.height));renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.25));renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix(); }
   if(typeof ResizeObserver!=="undefined"){resizeObserver=new ResizeObserver(resize);resizeObserver.observe(canvas);}else window.addEventListener("resize",resize);resize();

@@ -1,14 +1,14 @@
 # RigCraft 3D
 
-RigCraft 3D is a browser-based PC configurator with an interactive Three.js view, an illustrative component catalogue, basic compatibility signals, and local build snapshots.
+RigCraft 3D is a browser-based PC configurator with an interactive Three.js assembly, a nine-category illustrative component catalogue, fit/compatibility checks, and local build snapshots.
 
 **Live site:** https://mmukeshbabu2010-dot.github.io/rigcraft-3d/
 
 ## Current capabilities
 
 - Rotate and inspect a procedural 3D PC assembly.
-- Choose sample cases, motherboards, CPUs, GPUs, and power supplies.
-- View build-check status on each component option, based on the currently selected parts, alongside compatibility messages for CPU/motherboard sockets, case GPU clearance, listed motherboard/case form factors, and estimated power.
+- Choose sample cases, motherboards, CPUs, CPU coolers, RAM kits, GPUs, storage drives, case-fan packs, and power supplies.
+- View build-check status on each component option, based on the currently selected parts, alongside checks for CPU/motherboard and cooler sockets, air-cooler height, liquid-radiator support, RAM generation/capacity/DIMM slots, GPU clearance, motherboard/case form factors, M.2/SATA storage connectivity, case-fan size/count, and estimated power.
 - Set a region preference, with India as the first-visit default.
 - Save up to 20 build snapshots in browser local storage, restore a saved component selection, delete saved snapshots, and export a snapshot as JSON.
 - Read the Privacy Policy and Terms and Conditions from the site footer.
@@ -16,9 +16,9 @@ RigCraft 3D is a browser-based PC configurator with an interactive Three.js view
 ## Current limitations
 
 - The 3D geometry is illustrative, not manufacturer CAD or a guarantee of physical fit.
-- The included parts catalogue is small sample data. Compatibility checks are incomplete, and case fit metadata is illustrative. Always confirm clearances and supported form factors against manufacturer specifications.
+- The included parts catalogue is small sample data. Compatibility checks cover only the fields currently represented in the sample catalogue; they are not a complete manufacturer compatibility database. Cooler, storage and fan fit values are illustrative. Confirm all dimensions, clearances, sockets, interfaces and mounting support against manufacturer specifications.
 - There is no live retailer pricing, stock feed, or currency conversion.
-- Snapshots store selected catalogue part IDs plus displayed specifications. Older snapshots can be restored when their saved part names still match the current catalogue. Snapshots do not include pricing.
+- Snapshots store selected catalogue part IDs plus displayed specifications. Older snapshots can be restored when their saved part names still match the current catalogue; snapshots predating cooler, storage and fan selection receive the bundled defaults for those new categories. Snapshots do not include pricing.
 - There are no accounts, cloud sync, or cloud backup.
 - Virtual operating-system simulations and synthetic benchmark results are not implemented and are not advertised as working features.
 
@@ -40,11 +40,20 @@ The project includes dependency-free static checks and a GitHub Actions workflow
 node --check app.js
 node --check js/workspace.js
 node --check scripts/validate-site.mjs
+node --check js/component-inspector.js
+node --check js/supabase-catalogue.js
 node --check scripts/test-compatibility.mjs
 node --check scripts/test-build-restore.mjs
+node --check scripts/test-component-catalogue.mjs
+node --check scripts/test-renderer-quality.mjs
+node --check scripts/test-selection-tools.mjs
 node scripts/validate-site.mjs
 node scripts/test-compatibility.mjs
 node scripts/test-build-restore.mjs
+node scripts/test-component-catalogue.mjs
+node scripts/test-completeness.mjs
+node scripts/test-renderer-quality.mjs
+node scripts/test-selection-tools.mjs
 ```
 
 The checks cover local HTML links and assets, duplicate IDs, in-page anchors, script syntax, remote font/script references, the shape of the parts catalogue, the saved-build restore controls/API, and case/board fit metadata. Focused behavior tests exercise unsupported form-factor and CPU socket mismatches, candidate compatibility previews, and build restoration by ID and legacy name with atomic failure behavior. They do not replace manual browser, accessibility, legal, or security review.

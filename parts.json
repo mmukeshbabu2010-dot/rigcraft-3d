@@ -10,7 +10,17 @@
         "ATX",
         "Micro-ATX",
         "Mini-ITX"
-      ]
+      ],
+      "supported_radiator_sizes_mm": [
+        240,
+        360
+      ],
+      "supported_fan_sizes_mm": [
+        120,
+        140
+      ],
+      "max_case_fans": 6,
+      "drive_bays_2_5": 2
     },
     {
       "id": "compact-itx",
@@ -20,7 +30,15 @@
       "color_hex": "0x0b0c10",
       "supported_form_factors": [
         "Mini-ITX"
-      ]
+      ],
+      "supported_radiator_sizes_mm": [
+        240
+      ],
+      "supported_fan_sizes_mm": [
+        120
+      ],
+      "max_case_fans": 4,
+      "drive_bays_2_5": 1
     },
     {
       "id": "mid-tower",
@@ -32,7 +50,17 @@
         "ATX",
         "Micro-ATX",
         "Mini-ITX"
-      ]
+      ],
+      "supported_radiator_sizes_mm": [
+        240,
+        360
+      ],
+      "supported_fan_sizes_mm": [
+        120,
+        140
+      ],
+      "max_case_fans": 6,
+      "drive_bays_2_5": 2
     }
   ],
   "motherboards": [
@@ -44,7 +72,9 @@
       "color_hex": "0x182b31",
       "memory_type": "DDR5",
       "memory_slots": 4,
-      "max_memory_gb": 192
+      "max_memory_gb": 192,
+      "m2_slots": 3,
+      "sata_ports": 4
     },
     {
       "id": "b760-matx",
@@ -54,7 +84,9 @@
       "color_hex": "0x26343d",
       "memory_type": "DDR5",
       "memory_slots": 4,
-      "max_memory_gb": 192
+      "max_memory_gb": 192,
+      "m2_slots": 2,
+      "sata_ports": 4
     },
     {
       "id": "x670-atx",
@@ -64,7 +96,9 @@
       "color_hex": "0x35242c",
       "memory_type": "DDR5",
       "memory_slots": 4,
-      "max_memory_gb": 192
+      "max_memory_gb": 192,
+      "m2_slots": 3,
+      "sata_ports": 6
     },
     {
       "id": "b650-itx",
@@ -74,7 +108,9 @@
       "color_hex": "0x30292c",
       "memory_type": "DDR5",
       "memory_slots": 2,
-      "max_memory_gb": 128
+      "max_memory_gb": 128,
+      "m2_slots": 2,
+      "sata_ports": 4
     }
   ],
   "cpus": [
@@ -191,6 +227,83 @@
       "capacity_gb": 16,
       "modules": 2,
       "speed_mhz": 5200
+    }
+  ],
+  "coolers": [
+    {
+      "id": "tower-air-120",
+      "name": "Dual-Tower Air Cooler (Illustrative)",
+      "cooling_type": "Air",
+      "height_mm": 158,
+      "fan_count": 2,
+      "max_cpu_power_watts": 260,
+      "socket_support": [
+        "LGA1700",
+        "AM5"
+      ]
+    },
+    {
+      "id": "aio-240",
+      "name": "240 mm Liquid AIO (Illustrative)",
+      "cooling_type": "Liquid",
+      "radiator_size_mm": 240,
+      "fan_count": 2,
+      "max_cpu_power_watts": 280,
+      "socket_support": [
+        "LGA1700",
+        "AM5"
+      ]
+    },
+    {
+      "id": "aio-360",
+      "name": "360 mm Liquid AIO (Illustrative)",
+      "cooling_type": "Liquid",
+      "radiator_size_mm": 360,
+      "fan_count": 3,
+      "max_cpu_power_watts": 350,
+      "socket_support": [
+        "LGA1700",
+        "AM5"
+      ]
+    }
+  ],
+  "storage": [
+    {
+      "id": "nvme-1tb",
+      "name": "M.2 NVMe SSD 1 TB (Illustrative)",
+      "drive_type": "NVMe M.2",
+      "capacity_gb": 1000,
+      "length_mm": 80
+    },
+    {
+      "id": "nvme-2tb",
+      "name": "M.2 NVMe SSD 2 TB (Illustrative)",
+      "drive_type": "NVMe M.2",
+      "capacity_gb": 2000,
+      "length_mm": 80
+    },
+    {
+      "id": "sata-2tb",
+      "name": "2.5-inch SATA SSD 2 TB (Illustrative)",
+      "drive_type": "2.5-inch SATA",
+      "capacity_gb": 2000,
+      "length_mm": 100
+    }
+  ],
+  "fans": [
+    {
+      "id": "fan-120-argb",
+      "name": "120 mm ARGB Case Fan Pack (3 fans)",
+      "size_mm": 120,
+      "rgb": true,
+      "count": 3
+    },
+    {
+      "id": "fan-140-black",
+      "name": "140 mm Black Case Fan Pack (2 fans)",
+      "size_mm": 140,
+      "rgb": false,
+      "count": 2
     }
   ]
 }
