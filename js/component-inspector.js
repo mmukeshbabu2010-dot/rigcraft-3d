@@ -124,6 +124,11 @@
     const label=new THREE.Mesh(new THREE.PlaneGeometry(.62,.31),new THREE.MeshBasicMaterial({map:texture}));
     label.rotation.x=-Math.PI/2;label.position.y=.173;g.add(label);
   }
+  function buildRam() {
+    const g=new THREE.Group();orbit.add(g);
+    const count=Math.max(1,Math.min(4,Number(partData.modules)||2));
+    for(let i=0;i<count;i++){const z=(i-(count-1)/2)*.34;box(g,[.16,1.35,.22],[0,0,z],materials.dark);box(g,[.12,1.12,.16],[.09,.02,z],materials.accent);for(let j=0;j<12;j++)box(g,[.012,.035,.025],[.09,-.62+j*.105,z],materials.metal);box(g,[.16,.08,.22],[0,.7,z],materials.metal);}
+  }
   function buildPsu() {
     const g=new THREE.Group();orbit.add(g);
     box(g,[1.62,.78,1.28],[0,0,0],materials.shell);
@@ -140,8 +145,8 @@
     for(let i=0;i<10;i++)box(g,[.018,.1,.018],[-.22+i*.048,.22,-.68],materials.metal);
     box(g,[.42,.12,.018],[0,-.29,-.66],materials.metal);
   }
-  const assetMap={motherboards:"assets/models/motherboard.glb",cpus:"assets/models/cpu.glb",psus:"assets/models/psu.glb"};
-  const fidelityText={cases:"Procedural case illustration",motherboards:"Reference motherboard mesh",cpus:"Reference CPU mesh",gpus:"Procedural GPU model",psus:"Reference PSU mesh"};
+  const assetMap={motherboards:"assets/models/motherboard.glb",cpus:"assets/models/cpu.glb",ram:"assets/models/ram.glb",psus:"assets/models/psu.glb"};
+  const fidelityText={cases:"Procedural case illustration",motherboards:"Reference motherboard mesh",cpus:"Reference CPU mesh",gpus:"Procedural GPU model",ram:"Reference RAM module mesh · kit specs from catalogue",psus:"Reference PSU mesh"};
   function fitModel(model) {
     model.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(model);const size=bounds.getSize(new THREE.Vector3());const center=bounds.getCenter(new THREE.Vector3());
     model.position.sub(center);const span=Math.max(size.x,size.y,size.z)||1;model.scale.multiplyScalar(1.6/span);model.updateMatrixWorld(true);orbit.add(model);
@@ -167,6 +172,7 @@
     if(category==="motherboards")facts.push(data.socket||"Socket n/a",data.form_factor||"Form factor n/a");
     if(category==="cpus")facts.push(data.socket||"Socket n/a",`${data.power_watts??"?"} W listed power`);
     if(category==="gpus")facts.push(`${data.length_mm??"?"} mm length`,`${data.power_watts??"?"} W listed power`,`${data.size_x??"?"} size class`);
+    if(category==="ram")facts.push(`${data.capacity_gb??"?"} GB total`,`${data.memory_type||"Type n/a"} · ${data.speed_mhz??"?"} MT/s`,`${data.modules??"?"} modules`);
     if(category==="psus")facts.push(`${data.wattage??"?"} W capacity`);
     facts.filter(Boolean).forEach(f=>factRow.appendChild(makeFact(f)));
     resetRoot();
@@ -179,7 +185,7 @@
     else fallback(category);
   }
   function fallback(category) {
-    resetRoot();if(category==="cases")buildCase();else if(category==="gpus")buildGpu();else if(category==="motherboards")buildBoard();else if(category==="cpus")buildCpu();else buildPsu();fitProcedural();
+    resetRoot();if(category==="cases")buildCase();else if(category==="gpus")buildGpu();else if(category==="motherboards")buildBoard();else if(category==="cpus")buildCpu();else if(category==="ram")buildRam();else buildPsu();fitProcedural();
   }
   function resize() { const r=canvas.getBoundingClientRect();const w=Math.max(1,Math.floor(r.width)),h=Math.max(1,Math.floor(r.height));renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.25));renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix(); }
   if(typeof ResizeObserver!=="undefined"){resizeObserver=new ResizeObserver(resize);resizeObserver.observe(canvas);}else window.addEventListener("resize",resize);resize();

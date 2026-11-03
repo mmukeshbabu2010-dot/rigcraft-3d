@@ -41,28 +41,40 @@
       "name": "Intel Z790 ATX Board",
       "socket": "LGA1700",
       "form_factor": "ATX",
-      "color_hex": "0x182b31"
+      "color_hex": "0x182b31",
+      "memory_type": "DDR5",
+      "memory_slots": 4,
+      "max_memory_gb": 192
     },
     {
       "id": "b760-matx",
       "name": "Intel B760 Micro-ATX Board",
       "socket": "LGA1700",
       "form_factor": "Micro-ATX",
-      "color_hex": "0x26343d"
+      "color_hex": "0x26343d",
+      "memory_type": "DDR5",
+      "memory_slots": 4,
+      "max_memory_gb": 192
     },
     {
       "id": "x670-atx",
       "name": "AMD X670 ATX Board",
       "socket": "AM5",
       "form_factor": "ATX",
-      "color_hex": "0x35242c"
+      "color_hex": "0x35242c",
+      "memory_type": "DDR5",
+      "memory_slots": 4,
+      "max_memory_gb": 192
     },
     {
       "id": "b650-itx",
       "name": "AMD B650 Mini-ITX Board",
       "socket": "AM5",
       "form_factor": "Mini-ITX",
-      "color_hex": "0x30292c"
+      "color_hex": "0x30292c",
+      "memory_type": "DDR5",
+      "memory_slots": 2,
+      "max_memory_gb": 128
     }
   ],
   "cpus": [
@@ -153,6 +165,32 @@
       "id": "psu-750w",
       "name": "750W Gold PSU",
       "wattage": 750
+    }
+  ],
+  "ram": [
+    {
+      "id": "ddr5-32gb-6000",
+      "name": "32 GB DDR5-6000 (2 \u00d7 16 GB)",
+      "memory_type": "DDR5",
+      "capacity_gb": 32,
+      "modules": 2,
+      "speed_mhz": 6000
+    },
+    {
+      "id": "ddr5-64gb-6000",
+      "name": "64 GB DDR5-6000 (2 \u00d7 32 GB)",
+      "memory_type": "DDR5",
+      "capacity_gb": 64,
+      "modules": 2,
+      "speed_mhz": 6000
+    },
+    {
+      "id": "ddr5-16gb-5200",
+      "name": "16 GB DDR5-5200 (2 \u00d7 8 GB)",
+      "memory_type": "DDR5",
+      "capacity_gb": 16,
+      "modules": 2,
+      "speed_mhz": 5200
     }
   ]
 }

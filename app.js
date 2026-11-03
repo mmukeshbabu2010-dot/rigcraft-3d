@@ -1,8 +1,8 @@
 
 "use strict";
 
-/* RigCraft 3D — procedural PC configurator.
-   Illustrative 3D models, not manufacturer CAD. */
+/* RigCraft 3D — PC configurator with PBR-lit reference meshes and procedural fallbacks.
+   Models are illustrative references, not manufacturer CAD. */
 
 const $ = (id) => document.getElementById(id);
 const container = $("canvas-container");
@@ -44,7 +44,52 @@ renderer.setSize(
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.12;
 container.appendChild(renderer.domElement);
+
+// A procedural studio environment gives imported metal, glass and plastic
+// something believable to reflect without a remote HDRI dependency.
+function createStudioEnvironment() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024;
+  canvas.height = 512;
+  const context = canvas.getContext("2d");
+  const backdrop = context.createLinearGradient(0, 0, 0, canvas.height);
+  backdrop.addColorStop(0, "#8292a7");
+  backdrop.addColorStop(0.42, "#39495b");
+  backdrop.addColorStop(1, "#111923");
+  context.fillStyle = backdrop;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const softbox = (x, y, width, height, alpha) => {
+    const glow = context.createRadialGradient(
+      x + width / 2, y + height / 2, 8,
+      x + width / 2, y + height / 2, Math.max(width, height) * 0.72
+    );
+    glow.addColorStop(0, `rgba(255,255,255,${alpha})`);
+    glow.addColorStop(1, "rgba(255,255,255,0)");
+    context.fillStyle = glow;
+    context.fillRect(x - width * 0.35, y - height * 0.35, width * 1.7, height * 1.7);
+  };
+  softbox(115, 62, 210, 180, 0.92);
+  softbox(690, 92, 180, 250, 0.72);
+  softbox(420, 18, 130, 110, 0.48);
+  softbox(35, 300, 180, 100, 0.2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.mapping = THREE.EquirectangularReflectionMapping;
+  texture.encoding = THREE.sRGBEncoding;
+  texture.needsUpdate = true;
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  pmrem.compileEquirectangularShader();
+  const environment = pmrem.fromEquirectangular(texture).texture;
+  scene.environment = environment;
+  texture.dispose();
+  pmrem.dispose();
+}
+
+createStudioEnvironment();
 
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
@@ -61,10 +106,11 @@ scene.add(new THREE.HemisphereLight(0xdceeff, 0x10151e, 1.2));
 const keyLight = new THREE.DirectionalLight(0xffffff, 2.3);
 keyLight.position.set(4, 7, 5);
 keyLight.castShadow = true;
-keyLight.shadow.mapSize.set(1024, 1024);
+keyLight.shadow.mapSize.set(2048, 2048);
 keyLight.shadow.camera.near = 0.5;
 keyLight.shadow.camera.far = 20;
-keyLight.shadow.bias = -0.0004;
+keyLight.shadow.bias = -0.00035;
+keyLight.shadow.normalBias = 0.025;
 scene.add(keyLight);
 
 const rimLight = new THREE.DirectionalLight(0x45a29e, 1.25);
@@ -100,6 +146,15 @@ const cableMaterial = material(0x090c11, 0.08, 0.76);
 const cableHighlight = material(0x252c34, 0.18, 0.56);
 const silver = material(0xa9b6c2, 0.86, 0.22);
 const white = material(0xe4f0f5, 0.18, 0.32);
+
+const studioFloor = new THREE.Mesh(
+  new THREE.PlaneGeometry(30, 30),
+  material(0x0d141d, 0.12, 0.86)
+);
+studioFloor.rotation.x = -Math.PI / 2;
+studioFloor.position.y = -1.31;
+studioFloor.receiveShadow = true;
+scene.add(studioFloor);
 
 const rgbMaterial = material(0x66fcf1, 0.18, 0.23, {
   emissive: 0x66fcf1,
@@ -208,6 +263,7 @@ const selected = {
   motherboards: null,
   cpus: null,
   gpus: null,
+  ram: null,
   psus: null
 };
 
@@ -249,6 +305,16 @@ function loadRealisticModels() {
       return;
     }
     componentAssetManager.load(record.asset).then((gltf) => {
+      gltf.scene.traverse((object) => {
+        if (!object.isMesh || !object.material) return;
+        const materials = Array.isArray(object.material) ? object.material : [object.material];
+        materials.forEach((importedMaterial) => {
+          if (importedMaterial.envMapIntensity !== undefined) importedMaterial.envMapIntensity = 1.15;
+          importedMaterial.needsUpdate = true;
+        });
+        object.castShadow = true;
+        object.receiveShadow = true;
+      });
       onLoaded(gltf);
       console.info("RigCraft 3D: loaded detailed " + label + " model from " + record.asset);
       if (hardwareLoaded) rebuildScene();
@@ -277,6 +343,7 @@ const categoryInfo = {
   motherboards: { label: "Motherboard" },
   cpus: { label: "CPU" },
   gpus: { label: "GPU" },
+  ram: { label: "Memory (RAM)" },
   psus: { label: "PSU" }
 };
 
@@ -542,11 +609,14 @@ function addFittedAsset(parent, asset, rotation, targetSize, targetPosition, opt
 
   const initialBounds = new THREE.Box3().setFromObject(fitGroup);
   const initialSize = initialBounds.getSize(new THREE.Vector3());
-  fitGroup.scale.set(
+  // Keep the source mesh's proportions. Independent axis scaling made real
+  // GLBs look swollen or flattened; contain the mesh inside the target bounds.
+  const fitScale = Math.min(
     targetSize[0] / Math.max(initialSize.x, 0.001),
     targetSize[1] / Math.max(initialSize.y, 0.001),
     targetSize[2] / Math.max(initialSize.z, 0.001)
   );
+  fitGroup.scale.setScalar(fitScale);
   fitGroup.updateMatrixWorld(true);
 
   const fittedBounds = new THREE.Box3().setFromObject(fitGroup);
@@ -603,7 +673,9 @@ function buildMotherboard() {
     } else {
       box(internals, [0.025, 0.21, 0.21], [-0.71, 0.374, -0.083], silver);
     }
-    for (const z of [-0.53, -0.41]) {
+    const installedModules = Math.min(4, Math.max(0, Number(selected.ram?.modules) || 0));
+    const dimmPositions = [-0.53, -0.41, -0.29, -0.17];
+    for (const z of dimmPositions.slice(0, installedModules)) {
       if (realisticRamAsset) {
         addFittedAsset(internals, realisticRamAsset, [Math.PI / 2, 0, 0], [0.05, 0.84, 0.18], [-0.69, 0.37, z]);
       } else {
@@ -671,13 +743,12 @@ function buildMotherboard() {
 
     box(internals, [0.08, 0.52, 0.055], [-0.6, 0.4, z], darkMetal);
 
-    if (i % 2 === 0) {
+    const installedSlotIndexes = [0, 2, 1, 3].slice(0, Math.min(4, Number(selected.ram?.modules) || 0));
+    if (installedSlotIndexes.includes(i)) {
       box(internals, [0.1, 0.43, 0.075], [-0.53, 0.42, z], darkMetal);
       box(internals, [0.012, 0.35, 0.058], [-0.47, 0.42, z], rgbMaterial);
       box(internals, [0.014, 0.04, 0.082], [-0.46, 0.64, z], silver);
       box(internals, [0.014, 0.04, 0.082], [-0.46, 0.2, z], silver);
-    } else {
-      box(internals, [0.08, 0.39, 0.055], [-0.53, 0.42, z], darkMetal);
     }
   }
 
@@ -1106,6 +1177,10 @@ function optionMeta(category, item) {
     return `${item.power_watts ?? "?"} W · ${item.length_mm ?? "?"} mm`;
   }
 
+  if (category === "ram") {
+    return `${item.capacity_gb ?? "?"} GB · DDR${String(item.memory_type || "?").replace(/^DDR/i, "")} · ${item.speed_mhz ?? "?"} MT/s`;
+  }
+
   if (category === "psus") {
     return `${item.wattage ?? "?"} W`;
   }
@@ -1176,12 +1251,13 @@ function compatibilityCheck() {
   const m = selected.motherboards;
   const cpu = selected.cpus;
   const gpu = selected.gpus;
+  const ram = selected.ram;
   const psu = selected.psus;
 
-  if (!c || !m || !cpu || !gpu || !psu) {
+  if (!c || !m || !cpu || !gpu || !ram || !psu) {
     return {
       status: "INCOMPLETE",
-      issues: ["Choose a case, motherboard, CPU, GPU and PSU."],
+      issues: ["Choose a case, motherboard, CPU, RAM, GPU and PSU."],
       estimatedPower: null
     };
   }
@@ -1198,6 +1274,30 @@ function compatibilityCheck() {
     unknown.push("CPU or motherboard socket information is missing.");
   } else if (m.socket !== cpu.socket) {
     issues.push(`Socket mismatch: motherboard ${m.socket}, CPU ${cpu.socket}.`);
+  }
+
+  const boardMemoryType = String(m.memory_type || "").trim().toUpperCase();
+  const ramMemoryType = String(ram.memory_type || "").trim().toUpperCase();
+  if (!boardMemoryType || !ramMemoryType) {
+    unknown.push("Motherboard or RAM memory-generation information is missing.");
+  } else if (boardMemoryType !== ramMemoryType) {
+    issues.push(`Memory type mismatch: motherboard supports ${boardMemoryType}, selected RAM is ${ramMemoryType}.`);
+  }
+
+  const moduleCount = validNumber(ram.modules);
+  const dimmSlots = validNumber(m.memory_slots);
+  if (moduleCount === null || dimmSlots === null) {
+    unknown.push("RAM module count or motherboard DIMM slot count is unknown.");
+  } else if (moduleCount > dimmSlots) {
+    issues.push(`RAM kit needs ${moduleCount} DIMM slots, but the motherboard lists ${dimmSlots}.`);
+  }
+
+  const capacity = validNumber(ram.capacity_gb);
+  const maxCapacity = validNumber(m.max_memory_gb);
+  if (capacity === null || maxCapacity === null) {
+    unknown.push("RAM capacity or motherboard maximum memory capacity is unknown.");
+  } else if (capacity > maxCapacity) {
+    issues.push(`RAM capacity ${capacity} GB exceeds the motherboard limit of ${maxCapacity} GB.`);
   }
 
   const cpuPower = validNumber(cpu.power_watts);
@@ -1260,10 +1360,9 @@ function updateSpecsAndCompatibility() {
   setSpec("selected-case", "Case", selected.cases?.name || "Not selected");
   setSpec("selected-motherboard", "Motherboard", selected.motherboards?.name || "Not selected");
   setSpec("selected-cpu", "CPU", selected.cpus?.name || "Not selected");
-  // These categories are shown explicitly so the build summary cannot imply that
-  // the current five-category catalogue is a complete PC parts list.
+  // Cooler and storage remain planned categories; RAM is now selectable.
   setSpec("selected-cooler", "CPU cooler", "Not selectable yet");
-  setSpec("selected-ram", "Memory (RAM)", "Not selectable yet");
+  setSpec("selected-ram", "Memory (RAM)", selected.ram ? `${selected.ram.name} · ${selected.ram.capacity_gb} GB` : "Not selected");
   setSpec("selected-storage", "Storage", "Not selectable yet");
   setSpec("selected-gpu", "GPU", selected.gpus?.name || "Not selected");
   setSpec("selected-psu", "PSU", selected.psus?.name || "Not selected");
@@ -1321,6 +1420,12 @@ function validateParts(data) {
 
       ids.add(item.id);
 
+      if (category === "ram") {
+        if (!item.memory_type || !Number.isFinite(Number(item.capacity_gb)) || !Number.isFinite(Number(item.modules)) || !Number.isFinite(Number(item.speed_mhz))) {
+          throw new Error(`Invalid RAM specifications in ${item.id}.`);
+        }
+      }
+
       if (category === "cases") {
         if (!Array.isArray(item.supported_form_factors) || !item.supported_form_factors.length ||
             item.supported_form_factors.some((value) => typeof value !== "string" || !value.trim())) {
@@ -1347,6 +1452,7 @@ function restoreBuildSnapshot(snapshot) {
     cases: "selected-case",
     motherboards: "selected-motherboard",
     cpus: "selected-cpu",
+    ram: "selected-ram",
     gpus: "selected-gpu",
     psus: "selected-psu"
   };
@@ -1370,6 +1476,9 @@ function restoreBuildSnapshot(snapshot) {
       }
     }
 
+    // Older snapshots predate selectable RAM. Give those builds the catalogue's
+    // default kit rather than making otherwise valid snapshots unrestorable.
+    if (!part && category === "ram" && !savedId) part = partsData.ram[0];
     if (!part) return false;
     restored[category] = part;
   }
