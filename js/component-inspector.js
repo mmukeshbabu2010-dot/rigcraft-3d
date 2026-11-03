@@ -145,8 +145,9 @@
     for(let i=0;i<10;i++)box(g,[.018,.1,.018],[-.22+i*.048,.22,-.68],materials.metal);
     box(g,[.42,.12,.018],[0,-.29,-.66],materials.metal);
   }
-  const assetMap={motherboards:"assets/models/motherboard.glb",cpus:"assets/models/cpu.glb",ram:"assets/models/ram.glb",psus:"assets/models/psu.glb"};
-  const fidelityText={cases:"Procedural case illustration",motherboards:"Reference motherboard mesh",cpus:"Reference CPU mesh",gpus:"Procedural GPU model",ram:"Reference RAM module mesh · kit specs from catalogue",psus:"Reference PSU mesh",coolers:"Procedural cooler illustration · catalogue fit data",storage:"Procedural storage illustration · catalogue interface data",fans:"Procedural case-fan pack · catalogue size and count"};
+  function resolveModel(category,data) {
+    return window.RigCraftModelRegistry?.resolve(category,data)||{fidelity:"Custom illustrative 3D model",note:"This model is generated from the selected catalogue record; it is not manufacturer CAD."};
+  }
   function fitModel(model) {
     model.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(model);const size=bounds.getSize(new THREE.Vector3());const center=bounds.getCenter(new THREE.Vector3());
     model.position.sub(center);const span=Math.max(size.x,size.y,size.z)||1;model.scale.multiplyScalar(1.6/span);model.updateMatrixWorld(true);orbit.add(model);
@@ -179,13 +180,12 @@
     if(category==="fans")facts.push(`${data.count??"?"} × ${data.size_mm??"?"} mm`,data.rgb?"ARGB lighting":"No RGB lighting");
     facts.filter(Boolean).forEach(f=>factRow.appendChild(makeFact(f)));
     resetRoot();
-    $("inspector-fidelity").textContent=fidelityText[category]||"Illustrative model";
-    $("inspector-disclaimer").textContent=category==="motherboards"?"Reference board mesh is not an exact rendering of every selected model. Listed specs come from the prototype catalogue.":category==="cpus"||category==="psus"?"Reference mesh is a visual example, not a SKU-specific rendering. Dimensions and details may differ.":category==="gpus"?"GPU preview is generated from the selected card dimensions and fan layout; it is not manufacturer CAD.":category==="coolers"||category==="storage"||category==="fans"?"Accessory preview is procedural and illustrative. Catalogue fit data is prototype data, not a manufacturer guarantee.":"Case is a procedural visual study, not exact manufacturer CAD. Fit limits are illustrative.";
-    const asset=assetMap[category]||null;
-    const useBundledGpu=false;
-    if(useBundledGpu){loader.load("assets/models/gpu.glb",g=>{if(key!==currentKey)return;resetRoot();const model=THREE.SkeletonUtils?THREE.SkeletonUtils.clone(g.scene):g.scene.clone(true);fitModel(model);$("inspector-fidelity").textContent="Reference GPU mesh · SKU differences possible";$("inspector-disclaimer").textContent="Bundled GPU reference geometry; this is not verified as an exact rendering of the selected SKU.";},error=>{if(key!==currentKey)return;console.error("RigCraft inspector: GPU reference failed to load; showing procedural preview.",error);fallback(category);$("inspector-fidelity").textContent="Procedural GPU fallback";});}
-    else if(asset){loader.load(asset,g=>{if(key!==currentKey)return;resetRoot();const model=THREE.SkeletonUtils?THREE.SkeletonUtils.clone(g.scene):g.scene.clone(true);fitModel(model);$("inspector-fidelity").textContent="Reference mesh loaded";},error=>{if(key!==currentKey)return;console.error(`RigCraft inspector: ${category} reference failed to load from ${asset}; showing procedural preview.`,error);fallback(category);$("inspector-fidelity").textContent="Procedural fallback · reference unavailable";});}
-    else fallback(category);
+    const modelDescriptor=resolveModel(category,data);
+    $("inspector-fidelity").textContent=modelDescriptor.fidelity||"Custom illustrative 3D model";
+    $("inspector-disclaimer").textContent=modelDescriptor.note||"Custom geometry is illustrative and is not manufacturer CAD.";
+    // Never show a category-level reference mesh as if it belonged to the selected SKU.
+    // The focused preview is built from the selected record's shape and available fit dimensions.
+    fallback(category);
   }
   function buildCooler() {
     const liquid=partData.cooling_type==="Liquid";
