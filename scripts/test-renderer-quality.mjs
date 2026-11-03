@@ -13,3 +13,9 @@ assert.match(app, /using its procedural model/, "procedural fallback remains ava
 assert.match(page, /Bundled reference meshes are used where available/, "the UI accurately describes model coverage");
 
 console.log("Renderer quality checks passed.");
+
+assert.match(page, /js\/device-benchmark\.js/, "device benchmark script is loaded");
+const benchmark = readFileSync(new URL("../js/device-benchmark.js", import.meta.url), "utf8");
+assert.match(benchmark, /measuredRenderedFPS/, "benchmark reports rendered FPS");
+assert.match(benchmark, /p95AnimationFrameMs/, "benchmark reports p95 frame pacing");
+assert.match(benchmark, /createObjectURL/, "benchmark exports a local JSON report");
