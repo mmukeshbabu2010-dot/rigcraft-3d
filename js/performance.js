@@ -9,7 +9,7 @@
   const profiles = {
     low: { pixelRatio: 1, antialias: false, shadows: false, frameInterval: 33, modelMode: 'procedural' },
     balanced: { pixelRatio: 1.25, antialias: false, shadows: true, frameInterval: 24, modelMode: 'sequential' },
-    high: { pixelRatio: 1.5, antialias: true, shadows: true, frameInterval: 0, modelMode: 'parallel' }
+    high: { pixelRatio: 1.5, antialias: false, shadows: true, frameInterval: 0, modelMode: 'parallel' }
   };
   let selected = 'auto';
   let active = detectedLow ? 'low' : 'balanced';

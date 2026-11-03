@@ -1,5 +1,5 @@
-/* RigCraft 3D — small offline app-shell cache; large optional GLBs stay network-only. */
-const CACHE_NAME = 'rigcraft-shell-v1';
+/* RigCraft 3D — offline app shell; large optional GLBs remain network-only. */
+const CACHE_NAME = 'rigcraft-shell-v2';
 const CORE_FILES = [
   './', './index.html', './style.css', './selection-tools.css', './legal.css',
   './app.js', './parts.json', './favicon.svg',
@@ -10,6 +10,7 @@ const CORE_FILES = [
   './vendor/meshopt_decoder.js', './vendor/SkeletonUtils-r128.js',
   './vendor/OrbitControls-r128.js'
 ];
+
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
@@ -17,21 +18,30 @@ self.addEventListener('install', (event) => {
     await self.skipWaiting();
   })());
 });
+
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.filter((key) => key.startsWith('rigcraft-shell-') && key !== CACHE_NAME).map((key) => caches.delete(key)));
+    await Promise.all(keys
+      .filter((key) => key.startsWith('rigcraft-shell-') && key !== CACHE_NAME)
+      .map((key) => caches.delete(key)));
     await self.clients.claim();
   })());
 });
+
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return;
   const url = new URL(request.url);
-  if (/\.glb(?:$|\?)/i.test(url.pathname)) return;
-  if (url.pathname.endsWith('/parts.json')) {
-    event.respondWith((async () => {
-      const cache = await caches.open(CACHE_NAME);
+  const extension = url.pathname.toLowerCase().split('.').pop();
+  if (extension === 'glb') return;
+
+  // HTML, scripts, styles, and data must refresh after deployments. The cache
+  // is a fallback for offline use, not a permanent source of stale app code.
+  const networkFirst = request.mode === 'navigate' || ['html', 'js', 'css', 'json'].includes(extension);
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    if (networkFirst) {
       try {
         const response = await fetch(request);
         if (response.ok) await cache.put(request, response.clone());
@@ -39,19 +49,16 @@ self.addEventListener('fetch', (event) => {
       } catch (_) {
         return (await cache.match(request)) || Response.error();
       }
-    })());
-    return;
-  }
-  event.respondWith((async () => {
-    const cache = await caches.open(CACHE_NAME);
+    }
+
     const cached = await cache.match(request);
     if (cached) return cached;
     try {
       const response = await fetch(request);
-      if (response.ok) cache.put(request, response.clone());
+      if (response.ok) await cache.put(request, response.clone());
       return response;
     } catch (_) {
-      return cached || Response.error();
+      return Response.error();
     }
   })());
 });
