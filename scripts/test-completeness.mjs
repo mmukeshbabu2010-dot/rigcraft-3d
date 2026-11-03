@@ -1,0 +1,13 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import vm from "node:vm";
+const src=fs.readFileSync("js/workspace.js","utf8");
+const start=src.indexOf("function getBuildCompleteness(selectionIds){");
+const end=src.indexOf("\nconst completenessNote",start);
+assert.ok(start>=0&&end>start,"completeness function exists");
+const fn=src.slice(start,end);
+const c=vm.runInNewContext(`(${fn.replace("function getBuildCompleteness(selectionIds)","function(selectionIds)")})`);
+const empty=c(null);assert.equal(empty.selectedCount,0);assert.equal(empty.totalSlots,8);assert.equal(empty.status,"PARTIAL");assert.deepEqual(Array.from(empty.missing),["Case","Motherboard","CPU","CPU cooler","Memory (RAM)","GPU","Storage","PSU"]);
+const core=c({cases:"c",motherboards:"m",cpus:"p",gpus:"g",psus:"s"});assert.equal(core.selectedCount,5);assert.equal(core.percent,63);assert.equal(core.status,"PARTIAL");assert.deepEqual(Array.from(core.missing),["CPU cooler","Memory (RAM)","Storage"]);
+const complete=c({cases:"c",motherboards:"m",cpus:"p",coolers:"cl",ram:"r",gpus:"g",storage:"st",psus:"s"});assert.equal(complete.selectedCount,8);assert.equal(complete.percent,100);assert.equal(complete.status,"COMPLETE");
+console.log("Build completeness tests passed: empty, five current slots, missing optional components, and full planned slots.");
