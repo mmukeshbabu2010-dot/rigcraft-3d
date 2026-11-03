@@ -1512,7 +1512,7 @@ function validateParts(data) {
         const validFanCount = Number.isFinite(fanCount) && fanCount > 0 && (item.cooling_type === "Air" ? fanCount <= 2 : fanCount <= 3);
         if (!validSockets || !validRating || !validCooling || !validFanCount) throw new Error(`Invalid cooler specifications in ${item.id}.`);
       }
-      if (category === "storage" && (!item.drive_type || Number(item.capacity_gb) <= 0 || Number(item.length_mm) <= 0)) {
+      if (category === "storage" && (! ["NVMe M.2", "2.5-inch SATA"].includes(item.drive_type) || Number(item.capacity_gb) <= 0 || Number(item.length_mm) <= 0)) {
         throw new Error(`Invalid storage specifications in ${item.id}.`);
       }
       if (category === "fans" && (!Number.isFinite(Number(item.size_mm)) || Number(item.size_mm) <= 0 || !Number.isFinite(Number(item.count)) || Number(item.count) <= 0 || Number(item.count) > 4 || typeof item.rgb !== "boolean")) {

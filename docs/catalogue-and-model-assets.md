@@ -1,7 +1,7 @@
 # Catalogue import and 3D model foundation
 
 ## Current scope
-The read-only Supabase adapter in js/supabase-catalogue.js is designed to run before app.js. It requests only verified records for the nine supported frontend categories: cases, motherboards, CPUs, GPUs, CPU coolers, RAM, storage, PSUs and case fans. Bundled parts.json remains the fallback. The remaining database categories are not yet enabled in the UI.
+The read-only Supabase adapter in js/supabase-catalogue.js is designed to run before app.js. It requests only verified records for the nine supported frontend categories: cases, motherboards, CPUs, GPUs, CPU coolers, RAM, storage, PSUs and case fans. Bundled parts.json remains the fallback.
 
 ## Prepare candidate catalogue SQL
 Requires Node.js 18+, no packages:
@@ -13,7 +13,7 @@ Input is a JSON array of normalized objects: id (unique slug), category_id, disp
 Dataset/code licenses may not clear underlying records. Preserve provenance and review terms before ingestion. Don't embed privileged keys in browser assets.
 
 ## Model registry
-js/model-registry.js names initial visualization variants and exposes window.RigCraftModelRegistry. Entries currently point to procedural fallbacks (asset:null). Before adding GLBs, record license/attribution, source, bounds, units, axis, pivot, attachment points and test render. Do not imply generic shapes are manufacturer-exact or derive fitment from appearance.
+js/model-registry.js names initial visualization variants and exposes window.RigCraftModelRegistry. Entries point to attributed bundled reference GLBs where suitable assets exist; categories without a suitable mesh use procedural fallbacks. Before adding GLBs, record license/attribution, source, bounds, units, axis, pivot, attachment points and test render. Do not imply generic shapes are manufacturer-exact or derive fitment from appearance.
 
 
 ## Accessory fit metadata

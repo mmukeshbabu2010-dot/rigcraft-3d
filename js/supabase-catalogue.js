@@ -89,7 +89,8 @@
               (part.cooling_type === "Air" && Number(part.height_mm) > 0 && Number(part.fan_count) <= 2) ||
               (part.cooling_type === "Liquid" && Number(part.radiator_size_mm) > 0 && Number(part.fan_count) <= 3);
             const fanPackSupported = category !== "fans" || Number(part.count) <= 4;
-            return commonFieldsComplete && coolerDimensionsComplete && fanPackSupported;
+            const storageInterfaceSupported = category !== "storage" || ["NVMe M.2", "2.5-inch SATA"].includes(part.drive_type);
+            return commonFieldsComplete && coolerDimensionsComplete && fanPackSupported && storageInterfaceSupported;
           });
           // Keep the bundled category intact unless every remote row has the
           // metadata needed for local compatibility and rendering decisions.

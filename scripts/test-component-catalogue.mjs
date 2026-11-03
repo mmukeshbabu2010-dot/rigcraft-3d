@@ -67,3 +67,7 @@ invalidFanCatalogue.fans[0].count = 5;
 assert.throws(() => vm.runInContext(`${validatorSource}; validateParts(${JSON.stringify(invalidFanCatalogue)});`, validatorContext), /Invalid case-fan specifications/);
 
 assert.match(remoteCatalogue, /mapped\.length > 0/, "Empty remote result sets must not erase bundled catalogue categories");
+
+const invalidStorageCatalogue = structuredClone(catalogue);
+invalidStorageCatalogue.storage[0].drive_type = "SAS";
+assert.throws(() => vm.runInContext(`${validatorSource}; validateParts(${JSON.stringify(invalidStorageCatalogue)});`, validatorContext), /Invalid storage specifications/);

@@ -6,7 +6,7 @@ RigCraft 3D is a browser-based PC configurator with an interactive Three.js asse
 
 ## Current capabilities
 
-- Rotate and inspect a procedural 3D PC assembly.
+- Rotate and inspect an illustrative 3D PC assembly with reference meshes where available.
 - Choose sample cases, motherboards, CPUs, CPU coolers, RAM kits, GPUs, storage drives, case-fan packs, and power supplies.
 - View build-check status on each component option, based on the currently selected parts, alongside checks for CPU/motherboard and cooler sockets, air-cooler height, liquid-radiator support, RAM generation/capacity/DIMM slots, GPU clearance, motherboard/case form factors, M.2/SATA storage connectivity, case-fan size/count, and estimated power.
 - Set a region preference, with India as the first-visit default.
@@ -56,7 +56,7 @@ node scripts/test-renderer-quality.mjs
 node scripts/test-selection-tools.mjs
 ```
 
-The checks cover local HTML links and assets, duplicate IDs, in-page anchors, script syntax, remote font/script references, the shape of the parts catalogue, the saved-build restore controls/API, and case/board fit metadata. Focused behavior tests exercise unsupported form-factor and CPU socket mismatches, candidate compatibility previews, and build restoration by ID and legacy name with atomic failure behavior. They do not replace manual browser, accessibility, legal, or security review.
+The checks cover local HTML links and assets, duplicate IDs, in-page anchors, script syntax, remote font/script references, the shape of the parts catalogue, the saved-build restore controls/API, and case, board, cooler, storage and fan fit metadata. Focused behavior tests exercise unsupported form-factor and CPU socket mismatches, candidate compatibility previews, and build restoration by ID and legacy name with atomic failure behavior. They do not replace manual browser, accessibility, legal, or security review.
 
 ## Third-party code
 
