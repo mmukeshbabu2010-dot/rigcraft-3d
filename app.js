@@ -284,63 +284,38 @@ let realisticRamAsset = null;
 let realisticStorageAsset = null;
 let componentAssetManager = null;
 let realisticCoolerAnimations = [];
+const loadedSkuIds = Object.create(null);
+const selectedSkuMeshCache = Object.create(null);
+const pendingSkuMeshes = new Set();
 let gpuMixer = null;
 let gpuFanAction = null;
 
 function loadRealisticModels() {
-  if (!THREE.GLTFLoader) {
-    console.error("RigCraft 3D: GLTFLoader is unavailable; using procedural component models.");
-    return;
-  }
-  if (!window.RigCraftAssetManager) {
-    console.error("RigCraft 3D: component asset manager is unavailable.");
-    return;
-  }
-
-  // Meshopt is optional for uncompressed GLBs. Pass it when present, but never
-  // block all model loading just because the optional decoder is unavailable.
-  componentAssetManager = window.RigCraftAssetManager.create(THREE, {
-    meshoptDecoder: window.MeshoptDecoder || undefined
-  });
-  const registry = window.RigCraftModelRegistry;
-  const load = (key, onLoaded, label) => {
-    const record = registry && registry.get(key);
-    if (!record || !record.asset) {
-      console.info("RigCraft 3D: no bundled GLB for " + label + "; using its procedural model.");
-      return;
-    }
-    componentAssetManager.load(record.asset).then((gltf) => {
-      gltf.scene.traverse((object) => {
-        if (!object.isMesh || !object.material) return;
-        const materials = Array.isArray(object.material) ? object.material : [object.material];
-        materials.forEach((importedMaterial) => {
-          if (importedMaterial.envMapIntensity !== undefined) importedMaterial.envMapIntensity = 1.15;
-          importedMaterial.needsUpdate = true;
-        });
-        object.castShadow = true;
-        object.receiveShadow = true;
-      });
-      onLoaded(gltf);
-      console.info("RigCraft 3D: loaded detailed " + label + " model from " + record.asset);
-      if (hardwareLoaded) rebuildScene();
-    }).catch((error) => {
-      console.error("RigCraft 3D: failed to load " + label + " GLB at " + record.asset + "; using procedural fallback.", error);
-    });
+  if (!THREE.GLTFLoader) { console.error("RigCraft 3D: GLTFLoader is unavailable; using detailed scene fallbacks."); return; }
+  if (!window.RigCraftAssetManager) { console.error("RigCraft 3D: component asset manager is unavailable."); return; }
+  componentAssetManager = window.RigCraftAssetManager.create(THREE, { meshoptDecoder: window.MeshoptDecoder || undefined });
+}
+function ensureSelectedSkuMeshes() {
+  if (!componentAssetManager || !window.RigCraftModelRegistry) return;
+  const targets = {
+    motherboards: v => { realisticMotherboardAsset = v; }, cpus: v => { realisticCpuAsset = v; },
+    gpus: v => { realisticGpuAsset = v; realisticGpuAnimations = []; }, psus: v => { realisticPsuAsset = v; },
+    coolers: v => { realisticCoolerAsset = v; realisticCoolerAnimations = []; }, ram: v => { realisticRamAsset = v; },
+    storage: v => { realisticStorageAsset = v; }
   };
-
-  load("gpu", (gltf) => {
-    realisticGpuAsset = gltf.scene;
-    realisticGpuAnimations = gltf.animations || [];
-  }, "GPU");
-  load("cpu", (gltf) => { realisticCpuAsset = gltf.scene; }, "CPU");
-  load("psu", (gltf) => { realisticPsuAsset = gltf.scene; }, "PSU");
-  load("motherboard", (gltf) => { realisticMotherboardAsset = gltf.scene; }, "motherboard");
-  load("cooler", (gltf) => {
-    realisticCoolerAsset = gltf.scene;
-    realisticCoolerAnimations = gltf.animations || [];
-  }, "CPU cooler");
-  load("ram", (gltf) => { realisticRamAsset = gltf.scene; }, "RAM");
-  load("storage", (gltf) => { realisticStorageAsset = gltf.scene; }, "storage");
+  for (const [category,setAsset] of Object.entries(targets)) {
+    const part=selected[category]; if(!part)continue; const id=part.id; const key=category+":"+id;
+    if(loadedSkuIds[category]===id)continue;
+    if(selectedSkuMeshCache[key]){setAsset(selectedSkuMeshCache[key]);loadedSkuIds[category]=id;continue;}
+    if(pendingSkuMeshes.has(key))continue;
+    setAsset(null);loadedSkuIds[category]=null;
+    const descriptor=window.RigCraftModelRegistry.resolve(category,part);if(!descriptor?.asset)continue;
+    pendingSkuMeshes.add(key);
+    componentAssetManager.load(descriptor.asset).then(gltf=>{
+      const model=gltf.scene;model.traverse(o=>{if(!o.isMesh||!o.material)return;const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach(mat=>{if(mat.envMapIntensity!==undefined)mat.envMapIntensity=1.15;mat.needsUpdate=true;});o.castShadow=true;o.receiveShadow=true;});
+      selectedSkuMeshCache[key]=model;if(selected[category]?.id===id){setAsset(model);loadedSkuIds[category]=id;if(hardwareLoaded)rebuildScene();}
+    }).catch(error=>console.error("RigCraft 3D: selected SKU mesh failed to load "+id+"; using scene fallback.",error)).finally(()=>pendingSkuMeshes.delete(key));
+  }
 }
 
 const categoryInfo = {
@@ -666,7 +641,7 @@ function buildMotherboard() {
   clearGroup(internals);
 
   if (realisticMotherboardAsset) {
-    // Real ASUS Strix B550-F board mesh. The PCB body is centred in the case;
+    // Selected SKU-specific motherboard mesh. The PCB body is centred in the case;
     // the extra mesh extent contains its I/O shroud and VRM heatsinks.
     addFittedAsset(
       internals,
@@ -685,12 +660,10 @@ function buildMotherboard() {
     }
     const installedModules = Math.min(4, Math.max(0, Number(selected.ram?.modules) || 0));
     const dimmPositions = [-0.53, -0.41, -0.29, -0.17];
-    for (const z of dimmPositions.slice(0, installedModules)) {
-      if (realisticRamAsset) {
-        addFittedAsset(internals, realisticRamAsset, [Math.PI / 2, 0, 0], [0.05, 0.84, 0.18], [-0.69, 0.37, z]);
-      } else {
-        box(internals, [0.05, 0.84, 0.18], [-0.69, 0.37, z], darkMetal);
-      }
+    if (realisticRamAsset && installedModules > 0) {
+      addFittedAsset(internals, realisticRamAsset, [0, 0, 0], [0.05, 0.84, 0.38], [-0.69, 0.37, -0.47]);
+    } else {
+      for (const z of dimmPositions.slice(0, installedModules)) box(internals, [0.05, 0.84, 0.18], [-0.69, 0.37, z], darkMetal);
     }
   } else {
     box(internals, [0.065, 1.8, 1.75], [-0.76, 0.02, 0], boardMaterial);
@@ -853,6 +826,11 @@ function buildCooler() {
     ? [-0.71, 0.374, -0.083]
     : [-0.468, 0.3, -0.22];
 
+  if (realisticCoolerAsset && loadedSkuIds.coolers === cooler.id) {
+    addFittedAsset(coolerGroup, realisticCoolerAsset, [0, 0, 0], cooler.cooling_type === "Air" ? [0.85, 0.9, 0.65] : [1.3, 0.9, 0.65], mount);
+    return;
+  }
+
   if (cooler.cooling_type === "Air") {
     const heightScale = Math.max(0.9, Math.min(1.12, Number(cooler.height_mm || 158) / 158));
     const center = [mount[0] + 0.18, mount[1], mount[2]];
@@ -907,9 +885,8 @@ function buildStorage() {
 
   if (drive.drive_type === "NVMe M.2") {
     const position = realisticMotherboardAsset ? [-0.71, -0.039, 0.189] : [-0.56, -0.23, 0.3];
-    if (realisticMotherboardAsset && realisticStorageAsset) {
-      addFittedAsset(storageGroup, realisticStorageAsset, [Math.PI / 2, Math.PI / 2, 0],
-        [0.02, 0.13, 0.59], position);
+    if (realisticStorageAsset && loadedSkuIds.storage === drive.id) {
+      addFittedAsset(storageGroup, realisticStorageAsset, [0, 0, Math.PI / 2], [0.02, 0.13, 0.59], position);
     } else {
       box(storageGroup, [0.025, 0.09, 0.52], position, darkMetal);
       for (let i = 0; i < 4; i++) {
@@ -923,6 +900,7 @@ function buildStorage() {
 
   if (drive.drive_type === "2.5-inch SATA") {
     const position = [0.32, -0.57, -0.68];
+    if (realisticStorageAsset && loadedSkuIds.storage === drive.id) { addFittedAsset(storageGroup, realisticStorageAsset, [0, 0, 0], [0.48, 0.085, 0.58], position); return; }
     box(storageGroup, [0.48, 0.085, 0.58], position, darkMetal);
     box(storageGroup, [0.45, 0.012, 0.55], [position[0], position[1] + 0.05, position[2]], metal);
     box(storageGroup, [0.12, 0.018, 0.08], [position[0] - 0.18, position[1] + 0.062, position[2] + 0.2], silver);
@@ -999,10 +977,8 @@ function buildGPUProcedural() {
 }
 
 function buildGPU() {
-  // This bundled mesh represents an RTX 3080 reference only. Never display it
-  // as a different GPU SKU; other selections retain the procedural fallback
-  // until an appropriately licensed matching model is added.
-  if (!realisticGpuAsset || selected.gpus?.id !== "rtx3080") {
+  // Render the selected catalogue GPU's own mesh, never the legacy category reference.
+  if (!realisticGpuAsset || loadedSkuIds.gpus !== selected.gpus?.id) {
     gpuMixer = null;
     gpuFanAction = null;
     buildGPUProcedural();
@@ -1013,7 +989,7 @@ function buildGPU() {
   gpuMixer = null;
   gpuFanAction = null;
   const model = componentAssetManager ? componentAssetManager.clone(realisticGpuAsset) : window.RigCraftAssetManager.create(THREE).clone(realisticGpuAsset);
-  model.rotation.x = Math.PI / 2;
+  model.rotation.set(0, 0, 0);
   model.updateMatrixWorld(true);
   const initialBounds = new THREE.Box3().setFromObject(model);
   const initialSize = initialBounds.getSize(new THREE.Vector3());
@@ -1130,6 +1106,7 @@ function buildCables() {
 /* Scene rebuilding and lighting */
 
 function rebuildScene() {
+  ensureSelectedSkuMeshes();
   // Reset the registry once, before rebuilding every fan.
   // This keeps CPU, GPU and case fans in the animation list.
   fanRotors.length = 0;

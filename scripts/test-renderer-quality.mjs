@@ -9,8 +9,9 @@ assert.match(app, /scene\.environment\s*=\s*environment/, "PBR environment is as
 assert.match(app, /renderer\.toneMapping\s*=\s*THREE\.ACESFilmicToneMapping/, "filmic tone mapping is enabled");
 assert.match(app, /fitGroup\.scale\.setScalar\(fitScale\)/, "GLB fitting preserves model proportions");
 assert.match(app, /object\.receiveShadow\s*=\s*true/, "imported meshes receive shadows");
-assert.match(app, /using its procedural model/, "procedural fallback remains available");
-assert.match(page, /Bundled reference meshes are used where available/, "the UI accurately describes model coverage");
+assert.match(app, /function buildGPUProcedural\s*\(/, "procedural GPU fallback remains available if a selected GLB cannot load");
+assert.match(app, /ensureSelectedSkuMeshes\(\)/, "selected SKU GLB meshes are used in the assembled build");
+assert.match(page, /Each catalogue selection loads its own detailed custom 3D mesh/, "the UI accurately describes per-SKU custom mesh coverage");
 
 console.log("Renderer quality checks passed.");
 

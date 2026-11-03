@@ -37,10 +37,13 @@
   };
   function resolve(category,part){
     if(!part||!part.id||!categoryKeys[category])return null;
-    const profile=profiles[part.id]||{shape:categoryKeys[category]+"-catalogue-form"};
-    return Object.freeze({id:part.id,category,kind:"sku-linked-procedural-preview",shape:profile.shape,profile:Object.freeze({...profile}),
-      fidelity:"SKU-linked procedural preview · illustrative",exactManufacturerModel:false,asset:null,unit:"mm",
-      note:"This procedural preview is linked to the selected catalogue record but is not the manufacturer's actual geometry or official CAD model. Unverified dimensions are not inferred."});
+    const profile=profiles[part.id];
+    if(!profile)return null;
+    return Object.freeze({id:part.id,category,kind:"original-custom-high-detail-mesh",shape:profile.shape,
+      profile:Object.freeze({...profile}),asset:"assets/models/catalogue/"+part.id+".glb",
+      source:"RigCraft original mesh",fidelity:"Detailed custom 3D mesh · not official manufacturer CAD",
+      exactManufacturerModel:false,unit:"normalized visual scale",
+      note:"An original detailed mesh built for this catalogue SKU using available catalogue attributes. It is not manufacturer CAD or a verified exact replica; dimensions absent from the catalogue are visual estimates."});
   }
   window.RigCraftModelRegistry=Object.freeze({resolve,get:k=>categoryAssets[k]||null,list:()=>Object.keys(categoryKeys),profileCount:Object.keys(profiles).length});
 })();

@@ -36,6 +36,8 @@ jobs:
           node --check scripts/test-build-restore.mjs
           node --check scripts/test-selection-tools.mjs
           node --check scripts/test-renderer-quality.mjs
+          node --check scripts/test-catalogue-meshes.mjs
+          python3 -m py_compile scripts/generate-catalogue-meshes.py
       - name: Validate pages, local assets, and parts catalogue
         run: |
           node scripts/test-performance-support.mjs
@@ -46,3 +48,5 @@ jobs:
           node scripts/test-build-restore.mjs
           node scripts/test-selection-tools.mjs
           node scripts/test-renderer-quality.mjs
+          python3 scripts/generate-catalogue-meshes.py
+          node scripts/test-catalogue-meshes.mjs
