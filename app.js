@@ -1,8 +1,8 @@
 
 "use strict";
 
-/* RigCraft 3D — procedural PC configurator.
-   Illustrative 3D models, not manufacturer CAD. */
+/* RigCraft 3D — PC configurator with PBR-lit reference meshes and procedural fallbacks.
+   Models are illustrative references, not manufacturer CAD. */
 
 const $ = (id) => document.getElementById(id);
 const container = $("canvas-container");
@@ -44,7 +44,52 @@ renderer.setSize(
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.12;
 container.appendChild(renderer.domElement);
+
+// A procedural studio environment gives imported metal, glass and plastic
+// something believable to reflect without a remote HDRI dependency.
+function createStudioEnvironment() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024;
+  canvas.height = 512;
+  const context = canvas.getContext("2d");
+  const backdrop = context.createLinearGradient(0, 0, 0, canvas.height);
+  backdrop.addColorStop(0, "#8292a7");
+  backdrop.addColorStop(0.42, "#39495b");
+  backdrop.addColorStop(1, "#111923");
+  context.fillStyle = backdrop;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const softbox = (x, y, width, height, alpha) => {
+    const glow = context.createRadialGradient(
+      x + width / 2, y + height / 2, 8,
+      x + width / 2, y + height / 2, Math.max(width, height) * 0.72
+    );
+    glow.addColorStop(0, `rgba(255,255,255,${alpha})`);
+    glow.addColorStop(1, "rgba(255,255,255,0)");
+    context.fillStyle = glow;
+    context.fillRect(x - width * 0.35, y - height * 0.35, width * 1.7, height * 1.7);
+  };
+  softbox(115, 62, 210, 180, 0.92);
+  softbox(690, 92, 180, 250, 0.72);
+  softbox(420, 18, 130, 110, 0.48);
+  softbox(35, 300, 180, 100, 0.2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.mapping = THREE.EquirectangularReflectionMapping;
+  texture.encoding = THREE.sRGBEncoding;
+  texture.needsUpdate = true;
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  pmrem.compileEquirectangularShader();
+  const environment = pmrem.fromEquirectangular(texture).texture;
+  scene.environment = environment;
+  texture.dispose();
+  pmrem.dispose();
+}
+
+createStudioEnvironment();
 
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
@@ -61,10 +106,11 @@ scene.add(new THREE.HemisphereLight(0xdceeff, 0x10151e, 1.2));
 const keyLight = new THREE.DirectionalLight(0xffffff, 2.3);
 keyLight.position.set(4, 7, 5);
 keyLight.castShadow = true;
-keyLight.shadow.mapSize.set(1024, 1024);
+keyLight.shadow.mapSize.set(2048, 2048);
 keyLight.shadow.camera.near = 0.5;
 keyLight.shadow.camera.far = 20;
-keyLight.shadow.bias = -0.0004;
+keyLight.shadow.bias = -0.00035;
+keyLight.shadow.normalBias = 0.025;
 scene.add(keyLight);
 
 const rimLight = new THREE.DirectionalLight(0x45a29e, 1.25);
@@ -100,6 +146,15 @@ const cableMaterial = material(0x090c11, 0.08, 0.76);
 const cableHighlight = material(0x252c34, 0.18, 0.56);
 const silver = material(0xa9b6c2, 0.86, 0.22);
 const white = material(0xe4f0f5, 0.18, 0.32);
+
+const studioFloor = new THREE.Mesh(
+  new THREE.PlaneGeometry(30, 30),
+  material(0x0d141d, 0.12, 0.86)
+);
+studioFloor.rotation.x = -Math.PI / 2;
+studioFloor.position.y = -1.31;
+studioFloor.receiveShadow = true;
+scene.add(studioFloor);
 
 const rgbMaterial = material(0x66fcf1, 0.18, 0.23, {
   emissive: 0x66fcf1,
@@ -250,6 +305,16 @@ function loadRealisticModels() {
       return;
     }
     componentAssetManager.load(record.asset).then((gltf) => {
+      gltf.scene.traverse((object) => {
+        if (!object.isMesh || !object.material) return;
+        const materials = Array.isArray(object.material) ? object.material : [object.material];
+        materials.forEach((importedMaterial) => {
+          if (importedMaterial.envMapIntensity !== undefined) importedMaterial.envMapIntensity = 1.15;
+          importedMaterial.needsUpdate = true;
+        });
+        object.castShadow = true;
+        object.receiveShadow = true;
+      });
       onLoaded(gltf);
       console.info("RigCraft 3D: loaded detailed " + label + " model from " + record.asset);
       if (hardwareLoaded) rebuildScene();
@@ -544,11 +609,14 @@ function addFittedAsset(parent, asset, rotation, targetSize, targetPosition, opt
 
   const initialBounds = new THREE.Box3().setFromObject(fitGroup);
   const initialSize = initialBounds.getSize(new THREE.Vector3());
-  fitGroup.scale.set(
+  // Keep the source mesh's proportions. Independent axis scaling made real
+  // GLBs look swollen or flattened; contain the mesh inside the target bounds.
+  const fitScale = Math.min(
     targetSize[0] / Math.max(initialSize.x, 0.001),
     targetSize[1] / Math.max(initialSize.y, 0.001),
     targetSize[2] / Math.max(initialSize.z, 0.001)
   );
+  fitGroup.scale.setScalar(fitScale);
   fitGroup.updateMatrixWorld(true);
 
   const fittedBounds = new THREE.Box3().setFromObject(fitGroup);
