@@ -61,3 +61,9 @@ assert.match(remoteCatalogue, /requiredAccessoryFields/);
 console.log("Runtime catalogue validation passed: all nine categories accepted; incomplete cooler records rejected; remote rows guarded by required fit metadata.");
 
 assert.match(app, /setSpec\(\"selected-fans\"/, "Selected case fans must appear in the build summary");
+
+const invalidFanCatalogue = structuredClone(catalogue);
+invalidFanCatalogue.fans[0].count = 5;
+assert.throws(() => vm.runInContext(`${validatorSource}; validateParts(${JSON.stringify(invalidFanCatalogue)});`, validatorContext), /Invalid case-fan specifications/);
+
+assert.match(remoteCatalogue, /mapped\.length > 0/, "Empty remote result sets must not erase bundled catalogue categories");

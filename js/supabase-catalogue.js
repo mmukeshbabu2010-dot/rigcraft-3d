@@ -86,13 +86,14 @@
             return typeof value === "string" && value.trim().length > 0;
             });
             const coolerDimensionsComplete = category !== "coolers" ||
-              (part.cooling_type === "Air" && Number(part.height_mm) > 0) ||
-              (part.cooling_type === "Liquid" && Number(part.radiator_size_mm) > 0);
-            return commonFieldsComplete && coolerDimensionsComplete;
+              (part.cooling_type === "Air" && Number(part.height_mm) > 0 && Number(part.fan_count) <= 2) ||
+              (part.cooling_type === "Liquid" && Number(part.radiator_size_mm) > 0 && Number(part.fan_count) <= 3);
+            const fanPackSupported = category !== "fans" || Number(part.count) <= 4;
+            return commonFieldsComplete && coolerDimensionsComplete && fanPackSupported;
           });
           // Keep the bundled category intact unless every remote row has the
           // metadata needed for local compatibility and rendering decisions.
-          if (requiredAccessoryFields.length === 0 || complete.length === mapped.length) bundled[category] = mapped;
+          if (mapped.length > 0 && (requiredAccessoryFields.length === 0 || complete.length === mapped.length)) bundled[category] = mapped;
         }
       }
       return new Response(JSON.stringify(bundled), {

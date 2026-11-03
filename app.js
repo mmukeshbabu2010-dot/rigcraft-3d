@@ -1508,13 +1508,14 @@ function validateParts(data) {
         const validCooling = item.cooling_type === "Air"
           ? Number(item.height_mm) > 0
           : item.cooling_type === "Liquid" && Number(item.radiator_size_mm) > 0;
-        const validFanCount = Number.isFinite(Number(item.fan_count)) && Number(item.fan_count) > 0;
+        const fanCount = Number(item.fan_count);
+        const validFanCount = Number.isFinite(fanCount) && fanCount > 0 && (item.cooling_type === "Air" ? fanCount <= 2 : fanCount <= 3);
         if (!validSockets || !validRating || !validCooling || !validFanCount) throw new Error(`Invalid cooler specifications in ${item.id}.`);
       }
       if (category === "storage" && (!item.drive_type || Number(item.capacity_gb) <= 0 || Number(item.length_mm) <= 0)) {
         throw new Error(`Invalid storage specifications in ${item.id}.`);
       }
-      if (category === "fans" && (!Number.isFinite(Number(item.size_mm)) || Number(item.size_mm) <= 0 || !Number.isFinite(Number(item.count)) || Number(item.count) <= 0 || typeof item.rgb !== "boolean")) {
+      if (category === "fans" && (!Number.isFinite(Number(item.size_mm)) || Number(item.size_mm) <= 0 || !Number.isFinite(Number(item.count)) || Number(item.count) <= 0 || Number(item.count) > 4 || typeof item.rgb !== "boolean")) {
         throw new Error(`Invalid case-fan specifications in ${item.id}.`);
       }
       if (category === "motherboards" && (!Number.isFinite(Number(item.m2_slots)) || Number(item.m2_slots) < 0 || !Number.isFinite(Number(item.sata_ports)) || Number(item.sata_ports) < 0)) {

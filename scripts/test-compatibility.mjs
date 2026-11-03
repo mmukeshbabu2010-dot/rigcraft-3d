@@ -96,3 +96,12 @@ const fanFit = checkContext("compact-itx", "b650-itx", "ryzen7-7800x3d", "rtx407
 fanFit.selected.fans.size_mm = 140;
 assert.ok(fanFit.runCheck().issues.some((x) => x.includes("does not list support for 140 mm case fans")));
 console.log("Cooler, storage and case-fan compatibility tests passed.");
+
+const fanCapacity = checkContext("compact-itx", "b650-itx", "ryzen7-7800x3d", "rtx4070", "psu-650w");
+fanCapacity.selected.fans.count = 5;
+assert.ok(fanCapacity.runCheck().issues.some((x) => x.includes("exceeding the case's listed capacity of 4")));
+const sataPorts = checkContext("mid-tower", "x670-atx", "ryzen7-7800x3d", "rtx4070", "psu-650w");
+sataPorts.selected.storage = parts.storage.find((x) => x.id === "sata-2tb");
+sataPorts.selected.motherboards.sata_ports = 0;
+assert.ok(sataPorts.runCheck().issues.some((x) => x.includes("no listed SATA port")));
+console.log("Fan capacity and SATA port compatibility tests passed.");
