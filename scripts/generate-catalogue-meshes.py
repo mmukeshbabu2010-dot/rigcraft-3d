@@ -13,7 +13,11 @@ class Mesh:
   q=self.g[mat]; k=len(q['p'])//3
   for v in (a,b,c): q['p']+=list(v);q['n']+=list(n)
   q['i'] += [k,k+1,k+2]
- def quad(self,a,b,c,d,mat): self.tri(a,b,c,mat);self.tri(a,c,d,mat)
+ def quad(self,a,b,c,d,mat):
+  n=unit(((b[1]-a[1])*(c[2]-a[2])-(b[2]-a[2])*(c[1]-a[1]),(b[2]-a[2])*(c[0]-a[0])-(b[0]-a[0])*(c[2]-a[2]),(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])))
+  q=self.g[mat];k=len(q['p'])//3
+  for v in (a,b,c,d):q['p']+=list(v);q['n']+=list(n)
+  q['i'] += [k,k+1,k+2,k,k+2,k+3]
  def box(self,c,s,mat):
   x,y,z=c; a,b,d=[v/2 for v in s];v=[(x-a,y-b,z-d),(x+a,y-b,z-d),(x+a,y+b,z-d),(x-a,y+b,z-d),(x-a,y-b,z+d),(x+a,y-b,z+d),(x+a,y+b,z+d),(x-a,y+b,z+d)]
   for f in [(0,3,2,1),(4,5,6,7),(0,4,7,3),(1,2,6,5),(0,1,5,4),(3,7,6,2)]: self.quad(*[v[i] for i in f],mat)
