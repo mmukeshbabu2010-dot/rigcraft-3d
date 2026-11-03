@@ -15,3 +15,11 @@ These models are adapted for the RigCraft 3D scene. The Sketchfab assets are use
 License: https://creativecommons.org/licenses/by/4.0/
 
 The source asset collection and license notes are documented at https://github.com/Jacob-Baker-Git/CustomPc/blob/main/public/models/README.md.
+
+## SKU-aware previews and future manufacturer assets
+
+The component inspector now uses SKU-linked procedural previews rather than substituting one category-level reference mesh for every selected product. These previews remain illustrative and are not manufacturer CAD. The main assembly can continue to use the attributed reference GLBs listed above.
+
+Do not add a manufacturer model until the exact product/SKU is matched and the source terms permit the intended redistribution and browser embedding. Record source URL, asset creator, license/permission, attribution text, retrieval date, units, axes, pivot, bounds and any simplifications. Keep custom procedural geometry labelled as custom; never label it official CAD.
+
+Noctua's official CAD page: https://www.noctua.at/en/3d-cad-models. Its terms describe the models as suitable for reference/visualisation/integration, note modified geometry, and prohibit use for manufacture, reproduction or commercialisation. Verify current product-specific terms before use.

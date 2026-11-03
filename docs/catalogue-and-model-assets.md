@@ -1,7 +1,7 @@
 # Catalogue import and 3D model foundation
 
 ## Current scope
-The read-only Supabase adapter in js/supabase-catalogue.js is designed to run before app.js. It requests only verified records for the nine supported frontend categories: cases, motherboards, CPUs, GPUs, CPU coolers, RAM, storage, PSUs and case fans. Bundled parts.json remains the fallback.
+The read-only Supabase adapter in js/supabase-catalogue.js requests only verified records for the nine supported frontend categories: cases, motherboards, CPUs, GPUs, CPU coolers, RAM, storage, PSUs and case fans. Bundled parts.json remains the fallback.
 
 ## Prepare candidate catalogue SQL
 Requires Node.js 18+, no packages:
@@ -12,16 +12,12 @@ Input is a JSON array of normalized objects: id (unique slug), category_id, disp
 
 Dataset/code licenses may not clear underlying records. Preserve provenance and review terms before ingestion. Don't embed privileged keys in browser assets.
 
-## Model registry
-js/model-registry.js names initial visualization variants and exposes window.RigCraftModelRegistry. Entries point to attributed bundled reference GLBs where suitable assets exist; categories without a suitable mesh use procedural fallbacks. Before adding GLBs, record license/attribution, source, bounds, units, axis, pivot, attachment points and test render. Do not imply generic shapes are manufacturer-exact or derive fitment from appearance.
+## SKU-linked 3D preview profiles
+`js/model-registry.js` resolves all 31 bundled catalogue selections by category and stable part ID. Each profile has a visual archetype key and an explicit `exactManufacturerModel: false` flag. The isolated component inspector uses the selected catalogue record for its procedural preview and no longer substitutes a category-level GLB mesh as though it were the selected SKU. The registry retains its original category-level `get()` entries for the main assembly renderer, which still uses the existing attributed reference meshes where configured.
 
+These previews are procedural visualisations, not official manufacturer CAD and not proof of exact exterior geometry. They use available catalogue properties only; missing physical dimensions are not guessed. The main assembly's bundled GLBs also remain category references, not exact representations of every selected product.
 
-## Accessory fit metadata
+The next asset pass should replace previews with manufacturer-specific GLB/GLTF files only after the exact SKU, source, redistribution/embedding permission, license, coordinate system, bounds, pivot and attribution have been checked. Do not infer fitment from appearance.
 
-- Cases record supported radiator sizes, case-fan sizes/count capacity and 2.5-inch drive bays in addition to GPU/cooler clearances and motherboard form factors.
-- Motherboards record M.2 slot and SATA port counts alongside socket, form factor and RAM specifications.
-- Coolers record supported CPU sockets, a listed CPU-power rating, fan count and either air-cooler height or liquid-radiator size.
-- Storage records interface, capacity and drive length; NVMe M.2 and 2.5-inch SATA use different compatibility checks.
-- Case-fan packs record size, count and RGB support. They are optional accessories and do not add a ninth required completeness slot.
-
-Remote case, motherboard, cooler, storage and fan rows replace bundled data only when the full metadata needed by the current fit checks is present. Otherwise the complete bundled category remains in use. These checks are deliberately conservative but are still not a manufacturer compatibility guarantee.
+## Manufacturer model sources and rights
+Noctua publishes CAD files for many products and explicitly describes them as suitable for reference, visualisation and integration, while noting that some geometry is modified and that its terms restrict manufacture, reproduction and commercialisation. Check the product-specific terms before bundling any such file. Other manufacturers may provide no public redistributable model; a downloadable CAD file is not automatically licensed for redistribution.

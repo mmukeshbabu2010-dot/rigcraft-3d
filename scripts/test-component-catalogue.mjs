@@ -34,13 +34,11 @@ for (const category of categories) {
       assert.ok(part[field] !== undefined && part[field] !== null, `Missing ${field} for ${part.id}`);
     }
   }
-  assert.ok(inspector.includes(`${category}:`) || inspector.includes(`${category}:`), `Inspector has no fidelity mapping for ${category}`);
+  assert.ok(inspector.includes("resolveModel(category,data)"), `Inspector has no SKU model resolver for ${category}`);
 }
 assert.equal(total, 31, "The prototype should contain 31 component selections across nine categories");
-assert.ok(inspector.includes("const useBundledGpu=false;"), "The generic GPU reference mesh must remain disabled for SKU-specific previews");
-assert.ok(inspector.includes('assets/models/motherboard.glb'), "Motherboard reference mesh mapping missing");
-assert.ok(inspector.includes('assets/models/cpu.glb'), "CPU reference mesh mapping missing");
-assert.ok(inspector.includes('assets/models/psu.glb'), "PSU reference mesh mapping missing");
+assert.ok(inspector.includes("resolveModel(category,data)"), "Inspector must resolve a model descriptor for the selected catalogue record");
+assert.ok(inspector.includes("Never show a category-level reference mesh"), "Generic category meshes must not be presented as SKU-specific models");
 console.log(`Component catalogue QA passed: ${total} entries across ${categories.length} categories; identity, key specs and renderer mappings verified.`);
 
 const validatorStart = app.indexOf("function validateParts(data) {");
@@ -71,3 +69,22 @@ assert.match(remoteCatalogue, /mapped\.length > 0/, "Empty remote result sets mu
 const invalidStorageCatalogue = structuredClone(catalogue);
 invalidStorageCatalogue.storage[0].drive_type = "SAS";
 assert.throws(() => vm.runInContext(`${validatorSource}; validateParts(${JSON.stringify(invalidStorageCatalogue)});`, validatorContext), /Invalid storage specifications/);
+
+const registrySource = await readFile(new URL("../js/model-registry.js", import.meta.url), "utf8");
+const registryContext = { window: {} };
+vm.createContext(registryContext);
+vm.runInContext(registrySource, registryContext);
+const registry = registryContext.window.RigCraftModelRegistry;
+assert.equal(registry.profileCount, 31, "Every bundled catalogue selection must have an explicit model profile");
+assert.ok(registry.get("motherboard")?.asset === "assets/models/motherboard.glb", "Main assembly category mesh mapping must remain backward-compatible");
+assert.ok(registry.get("gpu")?.asset === "assets/models/gpu.glb", "Main assembly GPU reference mapping must remain backward-compatible");
+for (const category of categories) {
+  for (const part of catalogue[category]) {
+    const descriptor = registry.resolve(category, part);
+    assert.ok(descriptor, `Missing model descriptor for ${part.id}`);
+    assert.equal(descriptor.kind, "sku-linked-procedural-preview");
+    assert.equal(descriptor.exactManufacturerModel, false, "Custom geometry must never be labelled as official manufacturer CAD");
+    assert.ok(descriptor.shape, `Missing shape profile for ${part.id}`);
+  }
+}
+console.log("SKU model-profile QA passed: all 31 selections resolve to explicit, honestly labelled SKU-linked procedural previews.");

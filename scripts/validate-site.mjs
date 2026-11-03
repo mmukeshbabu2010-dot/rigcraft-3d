@@ -163,9 +163,10 @@ assert.match(htmlFiles.map((file) => fs.readFileSync(path.join(root, file), "utf
 const inspectorPath = path.join(root, "js/component-inspector.js");
 assert.ok(fs.existsSync(inspectorPath), "Component inspector module is missing");
 const inspectorSource = fs.readFileSync(inspectorPath, "utf8");
-for (const marker of ["component-detail-canvas", "MutationObserver", "inspector-fidelity", "inspector-reset", "OrbitControls", "assets/models/", "assets/models/ram.glb"]) {
+for (const marker of ["component-detail-canvas", "MutationObserver", "inspector-fidelity", "inspector-reset", "OrbitControls", "resolveModel(category,data)", "RigCraftModelRegistry"]) {
   assert.ok(inspectorSource.includes(marker), `Component inspector is missing ${marker}`);
 }
+assert.ok(!inspectorSource.includes("loader.load(asset"), "The SKU inspector must not present a category-level reference GLB as an exact selected-product model");
 assert.match(fs.readFileSync(path.join(root, "style.css"), "utf8"), /\.inspector-stage/, "Component inspector styles are missing");
 assert.match(fs.readFileSync(path.join(root, "index.html"), "utf8"), /js\/component-inspector\.js/, "Component inspector script is not linked");
 
