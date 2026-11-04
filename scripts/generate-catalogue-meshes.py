@@ -61,19 +61,64 @@ class Mesh:
    self.cyl((x,y,z+.11),r*.2,.08,'dark','z',32);self.cyl((x,y,z+.16),r*.115,.025,mat,'z',32)
 def case(m,p):
  compact=p['id']=='compact-itx';w,h,d=(1.05,1.55,1.05) if compact else (1.38,2.05,1.35)
+ # Structural chassis: open motherboard-side frame, opposite panel and rails.
  for x in [-w/2,w/2]:
   for y in [-h/2,h/2]:m.box((x,y,0),(.075,.075,d),'metal')
  for x in [-w/2,w/2]:
   for z in [-d/2,d/2]:m.box((x,0,z),(.075,h,.075),'metal')
  for y in [-h/2,h/2]:
   for z in [-d/2,d/2]:m.box((0,y,z),(w,.075,.075),'metal')
- m.box((w/2+.015,0,0),(.025,h*.91,d*.91),'glass');m.box((-w/2+.03,0,0),(.04,h*.88,d*.88),'black')
- m.box((0,0,d/2),(w*.88,h*.84,.045),'dark')
- for i in range(11):
-  for j in range(17):m.cyl((-.38*w+i*.076*w,-.39*h+j*.049*h,d/2+.03),.007,.012,'metal','z',8)
- for i in range(3):m.fan((0,h*.29-i*h*.29,d/2+.075),.22,'z')
- m.box((-w*.24,0,-.08),(.035,h*.79,d*.78),'metal');m.box((0,-h*.36,-.05),(w*.82,.16,d*.78),'black')
- for i in range(7):m.box((w*.38,-h*.22+i*.065,-d*.38),(.025,.035,.34),'metal')
+ # Tempered-glass viewing panel and solid rear cable-side cover.
+ m.box((w/2+.015,0,0),(.018,h*.88,d*.86),'glass')
+ m.box((-w/2+.03,0,0),(.045,h*.9,d*.9),'black')
+ # Interior motherboard tray with cable-access openings and raised mounting rails.
+ m.box((0,0,-d*.31),(w*.82,h*.84,.045),'dark')
+ m.box((-.22*w,0,-d*.275),(.045,h*.78,.07),'metal')
+ for i in range(7):
+  yy=-h*.34+i*h*.105
+  m.box((w*.12,yy,-d*.275),(.22,.055,.035),'black')
+  m.box((w*.23,yy,-d*.275),(.09,.035,.04),'metal')
+ # PSU basement, removable drive cage and PCI expansion slots.
+ m.box((0,-h*.36,-d*.03),(w*.86,.17,d*.76),'black')
+ m.box((-w*.32,-h*.12,-d*.32),(.24,h*.35,.32),'dark')
+ for i in range(4):
+  m.box((-w*.32,-h*.23+i*.1,-d*.13),(.26,.018,.29),'metal')
+ for i in range(7):
+  yy=-h*.23+i*.065
+  m.box((w*.39,yy,-d*.38),(.025,.038,.36),'metal')
+  m.box((w*.405,yy,-d*.38),(.014,.02,.26),'dark')
+ # Front fascia: perforated airflow mesh, deep fan bezels and individual screws.
+ m.box((0,0,d*.51),(w*.94,h*.94,.055),'dark')
+ m.box((0,0,d*.548),(w*.88,h*.9,.018),'black')
+ for row in range(21):
+  for col in range(13):
+   xx=-w*.39+col*w*.065; yy=-h*.41+row*h*.041
+   m.cyl((xx,yy,d*.565),.0065,.008,'metal','z',8)
+ for i in range(3):
+  yy=h*.29-i*h*.29
+  m.ring((0,yy,d*.585),.235,.025,'metal','z',48,8)
+  m.ring((0,yy,d*.592),.202,.009,'dark','z',48,6)
+  m.fan((0,yy,d*.60),.185,'z')
+  for k in range(4):
+   import math
+   ang=math.pi/4+k*math.pi/2
+   m.cyl((math.cos(ang)*.218,yy+math.sin(ang)*.218,d*.615),.012,.012,'aluminium','z',12)
+ # Top radiator/fan rail, ventilation slits, I/O island and foot pads.
+ m.box((0,h*.49,0),(w*.92,.045,d*.88),'dark')
+ for col in range(15):
+  xx=-w*.39+col*w*.055
+  m.box((xx,h*.515,0),(.018,.012,d*.56),'metal')
+ m.box((w*.25,h*.515,d*.12),(.25,.025,.36),'black')
+ for i in range(2):
+  m.cyl((w*.25+i*.075,h*.535,d*.12),.025,.012,'metal','y',16)
+ for x in [-w*.36,w*.36]:
+  for z in [-d*.34,d*.34]:
+   m.box((x,-h*.515,z),(.24,.08,.2),'rubber')
+ # Visible panel fasteners along the glass edge and subtle rear IO cutout trim.
+ for yy in [-h*.4,h*.4]:
+  for zz in [-d*.39,d*.39]:m.cyl((w*.515,yy,zz),.018,.012,'metal','x',12)
+ m.box((-w*.515,h*.28,-d*.35),(.018,.34,.52),'dark')
+ for i in range(7):m.box((-w*.528,h*.16+i*.045,-d*.35),(.012,.025,.42),'metal')
 def board(m,p):
  ff=p.get('form_factor','ATX');sx,sz=(1.65,1.85) if ff=='ATX' else ((1.65,1.35) if ff=='Micro-ATX' else (1.25,1.25))
  m.box((0,0,0),(sx,.075,sz),'pcb' if p.get('socket')=='AM5' else 'pcb2')

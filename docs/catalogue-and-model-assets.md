@@ -21,3 +21,12 @@ The next asset pass should replace previews with manufacturer-specific GLB/GLTF 
 
 ## Manufacturer model sources and rights
 Noctua publishes CAD files for many products and explicitly describes them as suitable for reference, visualisation and integration, while noting that some geometry is modified and that its terms restrict manufacture, reproduction and commercialisation. Check the product-specific terms before bundling any such file. Other manufacturers may provide no public redistributable model; a downloadable CAD file is not automatically licensed for redistribution.
+
+
+## Detailed custom PC case mesh pass
+The three bundled case-selection GLBs (`corsair-5000d`, `compact-itx`, and `mid-tower`) now use a denser original chassis visualisation with a front perforation field, fan bezels, visible structural rails, motherboard tray/cable-access detailing, expansion-slot stack, PSU basement, top vents, fasteners and feet. Regenerate with:
+```sh
+python3 scripts/generate-catalogue-meshes.py
+node scripts/test-catalogue-meshes.mjs
+```
+The catalogue mesh QA applies a 15,000-triangle floor to each case asset to catch accidental loss of the detail pass. These remain **custom visual meshes**, not GrabCAD imports, manufacturer CAD, or verified Corsair/SFF exact replicas. Visual proportions and hidden geometry are illustrative. The component inspector loads these case-selection assets; the assembled-scene case builder is still a separate renderer path and is not replaced by this asset pass. Recheck model scale and component clearances before treating any rendered placement as engineering-accurate.

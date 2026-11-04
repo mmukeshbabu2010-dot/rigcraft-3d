@@ -16,6 +16,7 @@ for(const [category,parts] of Object.entries(catalogue))for(const part of parts)
  const len=bytes.readUInt32LE(12);assert.equal(bytes.toString("ascii",16,20),"JSON");const doc=JSON.parse(bytes.toString("utf8",20,20+len).trim());
  assert.equal(doc.extras.catalogueId,part.id);assert.equal(doc.extras.manufacturerCAD,false);assert.ok(doc.meshes[0].primitives.length>=2);
  const tris=doc.meshes[0].primitives.reduce((n,p)=>n+doc.accessors[p.indices].count/3,0);assert.ok(tris>=250,`Low detail ${part.id}`);
+  if(category==="cases"){assert.ok(tris>=15000,`Case chassis detail regression ${part.id}: ${tris} triangles`);assert.ok(doc.meshes[0].primitives.length>=4,`Case material segmentation regression ${part.id}`);}
  const descriptor=registry.resolve(category,part);assert.equal(descriptor.asset,`assets/models/catalogue/${part.id}.glb`);assert.equal(descriptor.exactManufacturerModel,false);checked++;
 }
 assert.equal(checked,31);console.log(`Catalogue mesh QA passed: ${checked} SKU GLBs, metadata, geometry and registry paths verified.`);
